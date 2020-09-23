@@ -30,6 +30,7 @@
   var showRDF       = false;
   var elTxtMaxCols  = 120;
 
+  var autofocus     = true;
   var exampleNr_initial = svgInspect? -1 : 0;  // If 0, starts with empty VSM-box.
 
 
@@ -94,7 +95,7 @@
        so we'd need to use the String `'true'` */
   elVsmBox.vsmDictionary = createDict();
   elVsmBox.queryOptions = {};
-  elVsmBox.autofocus    = 'true';
+  elVsmBox.autofocus    = '' + autofocus;  // (See also much further below).
   elVsmBox.placeholder  = 'Type here'; ///'Type a term or doubleclick for menu';
   elVsmBox.cycleOnTab   = 'true';
   elVsmBox.initialValue = vsmBoxInitialValue;  // We must assign either Objects..
@@ -435,11 +436,17 @@
   }
 
 
-  // --- Clean up some placeholder-CSS, now/after everything is loaded. ---
+  // --- Clean up some placeholder-CSS, now/after everything is loaded.
+  //     And focus the vsm-box via a simulated mouseclick, if needed.   ---
 
   setTimeout(() => {
     var a = [...document.getElementsByClassName('loading')];
     for (let el of a)  el.classList.remove('loading');
+
+    if (autofocus) {
+      var el = elVsmBox.querySelector('#vsmBox .term.edit.inp');
+      el && el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    }
   }, 10);
 
 
