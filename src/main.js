@@ -1,0 +1,656 @@
+/*
+  This demo is based on vsm-box's "index-prod-standalone.html", showing
+  how to use a vsm-box with simple vanilla JS (i.e. without JS-framework).
+  Please see there for some considerations about setting attributes
+  on standalone webcomponents.
+*/
+
+(function() {
+
+  // A switch for activating VSM-to-SVG data inspection features.
+  const svgInspect = 0;  // 0=off, 1=on, 2=on+autoRefresh.
+
+  const addTheTestExample = 0 || svgInspect;  // Gibberish full-feature example?
+
+  if (svgInspect == 2)  setInterval(setPureSVGText, 1e3);  // Auto-refreshes it.
+
+
+  var allowClassNull_initial = true;
+  var hideConnFeet_initial   = false;
+  var useTweaks = true;  // Note: to get narrowest possible vsmBox, when filling
+                         // in a `vsmExamples[..]`, (i.e. with narrow endTerm):
+                         // this must be set to `true` at start!
+  var imgScale = 8;
+  var dlDelay = 0;
+  var whiteBox      = false;
+  var autoWhiteBox  = true;
+  var keepSVGCursor = false;
+  var json5         = true;
+  var pureSVG       = true;
+  var showRDF       = false;
+  var elTxtMaxCols  = 120;
+
+  var exampleNr_initial = svgInspect? -1 : 0;  // If 0, starts with empty VSM-box.
+
+
+  // Creates demo vsm-dictionary data. Called at start & on toggling `useTweaks`.
+  function createDict() {
+    var dictData = demoDictData({ useTweaks });
+    var options = Object.assign(
+      dictData,
+      ///{ delay: [20, 350] }  // Realistic delay. VsmDictionaryCacher can..
+    );                         // ..speed repeated requests up again.
+    return new (VsmDictionaryCacher(VsmDictionaryLocal)) (options);
+  }
+
+
+  var elVsmBox   = document.getElementById('vsmBox');
+  var elWhBTgl   = document.getElementById('toggleWhiteBox');
+  var elImgScale = document.getElementById('inputImgScale');
+  var elDlDelay  = document.getElementById('inputDlDelay');
+  var elSVGBtn   = document.getElementById('buttonGetSVG');
+  var elPNGBtn   = document.getElementById('buttonGetPNG');
+  var elMsg      = document.getElementById('msg');
+  var elMsg2     = document.getElementById('msg2');
+  var elTxt      = document.getElementById('stateText');
+  var elTxt2     = document.getElementById('rdfText');
+  var elRDF      = document.getElementById('rdf');
+
+  if (svgInspect)  {
+    document.getElementById('svg').classList.remove('hide');
+    elMsg.className += ' smallsep';
+    var elSVGFig = document.getElementById('svgFig');
+    var elSVG    = document.getElementById('svgText');
+    var elSVGHtm = document.getElementById('svgHtml');
+  }
+
+  var vsmExamples = vsmExamplesList({ addTheTestExample });
+
+  var vsmBoxInitialValue = getExample(exampleNr_initial);
+  var vsmBoxInitialSizes = {
+    minWidth:  200,  // Note: standalone vsm-box can never start narrower than
+                     // 200 (it's default) because it initializes with its
+                     // default width before we can update its sizes property.
+    minEndTermWidth: 40,      // } = VsmBox's default. Needed because these may..
+    minEndTermWideWidth: 100, // } ..be changed, and back.
+    connFootVisible: !hideConnFeet_initial,
+    theConnsResortDelay: 300  // (Useful to define: for live VSM-to-SVG testing).
+  };
+  var minEndTermWideWidthTweak = 22; // 20 // 100;
+
+  var vsmBoxSizes;  // Current value of `sizes`-attribute (Object) set on vsmBox.
+  var lastAutoFilledText = '';
+  var currentVSM = vsmBoxInitialValue;
+
+
+
+  // --- Initialize the vsm-box. ---
+
+  /* Set props and an event listener on the vsm-box webcomponent.
+     + Note: 'vsm-box' is not inside a Vue-activated '#app'-element here,
+       so we can not use `v-bind:...` to sync variables to it.
+       To set props here, we must assign Strings and Objects to the element's
+       attributes.  - Note that assigning e.g. a Boolean `true` would not work,
+       so we'd need to use the String `'true'` */
+  elVsmBox.vsmDictionary = createDict();
+  elVsmBox.queryOptions = {};
+  elVsmBox.autofocus    = 'true';
+  elVsmBox.placeholder  = 'Type here'; ///'Type a term or doubleclick for menu';
+  elVsmBox.cycleOnTab   = 'true';
+  elVsmBox.initialValue = vsmBoxInitialValue;  // We must assign either Objects..
+  elVsmBox.freshListDelay = '0';             // ..or Strings, to the attributes.
+  updateVsmBoxSizes(vsmBoxInitialSizes);
+
+  function updateVsmBoxSizes(sizes) {  // It detects change when given `new` Obj.
+    elVsmBox.sizes = vsmBoxSizes = Object.assign({}, vsmBoxSizes, sizes);
+  }
+
+
+  elVsmBox.customItem = function(o) {
+    if (useTweaks) {
+      if (/^(VAR|BIO):/.test(o.item.id)) {
+        o.strs.info = '';
+      }
+      if (o.item.z && o.item.z.tweakID) {
+        o.strs.extra = '' + o.item.z.tweakID;
+      }
+    }
+    return o.strs;
+  };
+
+
+  // --- Add external Copy+Paste support for the vsm-box. ---
+
+  // Make a 'clipboard' for term and term-reference copying. Make functions for
+  // accepting copied data, and for providing it back to be pasted on request.
+  // Note: copy+paste can happen between vsm-boxes, hence the external handling.
+  var termCopied;
+  elVsmBox.termCopy  = function(term) {
+    termCopied = term;
+    elVsmBox.termPaste = function() {  // Only activate this after smth is copied.
+      return termCopied;
+    };
+  };
+
+
+
+
+  // --- Initialize the checkboxes and buttons. ---
+
+  // Initialize the checkbox to make connectors-background & VsmBox-border white.
+  elWhBTgl.checked = whiteBox;  // Setting this forces a reset of the
+                                // checkbox, at pageload.
+  elVsmBox.classList[whiteBox ? 'add' : 'remove']('whiteBox');
+  elWhBTgl.addEventListener('change', function() {
+    whiteBox = !whiteBox;
+    elVsmBox.classList.toggle('whiteBox');
+    setPureSVGText();
+  });
+
+
+  // Init checkbox for removing connectors' feet.
+  var el = document.getElementById('toggleNoFeet');
+  el.checked = !vsmBoxSizes.connFootVisible;
+  el.addEventListener('change', function() {
+    updateVsmBoxSizes({ connFootVisible: !vsmBoxSizes.connFootVisible });
+    setPureSVGText();
+  });
+
+
+  // Init checkbox for removing/adding the Create-Term item the autocomplete list.
+  el = document.getElementById('toggleCreateItem');
+  elVsmBox.allowClassNull = allowClassNull_initial.toString();
+  el.checked = allowClassNull_initial;
+  el.addEventListener('change', function(ev) {
+    elVsmBox.allowClassNull = '' + !!ev.target.checked;
+  });
+
+
+  // Init checkbox for activating some tweaks to the dictionaries, for VSM-paper figs.
+  el = document.getElementById('toggleUseTweaks');
+  el.checked = useTweaks;
+  el.addEventListener('change', function() {
+    useTweaks = !useTweaks;
+    elVsmBox.vsmDictionary = createDict();
+    elVsmBox.classList.toggle('useTweaks');
+    widthToggle();
+  });
+  elVsmBox.classList[useTweaks ? 'add' : 'remove']('useTweaks');
+  widthToggle();
+
+  // Note: vsmBox currently does not reduce width (until page reload), so this
+  // code only narrows a VsmBox, when `useTweaks==true` at start! <---
+  function widthToggle() {
+    updateVsmBoxSizes({
+      minEndTermWidth:     useTweaks ?  1 : vsmBoxInitialSizes.minEndTermWidth,
+      minEndTermWideWidth: useTweaks ? minEndTermWideWidthTweak:
+                                            vsmBoxInitialSizes.minEndTermWideWidth
+    });
+  }
+
+
+  // Init checkbox for toggling JSON/JSON5 output in the stateText.
+  el = document.getElementById('toggleJSON5');
+  el.checked = json5;
+  el.addEventListener('change', function() {
+    json5 = !json5;
+    boxValueToStateText(currentVSM);
+  });
+
+
+  // Init checkbox for keeping/removing a visible cursor in export of vsm-box to SVG.
+  el = document.getElementById('toggleKeepSVGCursor');  // (Used for (earlier) vsmBox-to-SVG code).
+  el.checked = keepSVGCursor;
+  el.addEventListener('change', function() { keepSVGCursor = !keepSVGCursor; });
+
+
+  // Init checkbox for toggling pure-SVG output vs. SVG with a 'foreignObject' node.
+  el = document.getElementById('togglePureSVG');
+  el.checked = pureSVG;
+  updateSvgBtn();
+  el.addEventListener('change', function() {
+    pureSVG = !pureSVG;
+    updateSvgBtn();
+  });
+  function updateSvgBtn() {
+    elSVGBtn.classList[pureSVG ? 'add' : 'remove']('pureSVG');
+  }
+
+
+  // Init checkbox for showing the RDF-conversion textarea.
+  el = document.getElementById('toggleRDF');
+  el.checked = showRDF;
+  elRDF.classList[!showRDF ? 'add' : 'remove']('hide');
+  el.addEventListener('change', function() {
+    showRDF = !showRDF;
+    elRDF.classList.toggle('hide');
+    ///if (showRDF) {
+    ///  setTimeout(() => elRDF.scrollIntoView({ behavior: 'smooth' }), 250);
+    ///}
+  });
+
+
+  // Initialize the input for PNG scaling-value (or for any other bitmap format).
+  elImgScale.value = imgScale;
+  elImgScale.addEventListener('input', function() { imgScale = ~~elImgScale.value; });
+
+
+  // Initialize the input for the download delay value.
+  elDlDelay.value = dlDelay;
+  elDlDelay.addEventListener('input', function() { dlDelay = ~~elDlDelay.value; });
+
+
+  // Init checkbox for automatically switching to whiteBox mode before saving to SVG.
+  el = document.getElementById('toggleAutoWhiteBox');
+  el.checked = autoWhiteBox;
+  el.addEventListener('change', function() { autoWhiteBox = !autoWhiteBox; });
+
+
+
+  // --- Initialize the 'stateText' (JSON) and 'rdfText' textareas ---
+
+  elTxt.cols  = elTxtMaxCols;
+  elTxt2.cols = elTxtMaxCols;
+  enableTabShiftTab(elTxt);  // (Esp. so Tab won't move focus onto Clear button).
+
+
+
+  // --- Initialize the 'msg' elements (above the textareas) ---
+
+  function setElMsgWidth() {
+    elMsg.style.width = elMsg2.style.width = getComputedStyle(elTxt).width;
+  }
+
+  function setMsg(msg) {  // `msg`: 1 / -1 / fill-example name / error msg.
+    var d = new Date();
+    d = '[' + ('0' + d.getHours()).slice(-2) + ':' +
+      ('0' + d.getMinutes()).slice(-2) + ':' +
+      ('0' + d.getSeconds()).slice(-2) + '.' +
+      ('00' + d.getMilliseconds()).slice(-3, -1) + ']';
+    elMsg.innerHTML = !msg ? '' :
+      ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
+  }
+
+  window.addEventListener('resize', setElMsgWidth);
+  setElMsgWidth();
+  setMsg('');
+
+
+
+  // --- Add a button for each available example. ---
+
+  var exampleButtonC = document.getElementById('exampleButtonC');
+  var exampleButtons = document.getElementById('exampleButtons');
+  for (var i = 0, newB = 0;  i < vsmExamples.length;  i++) {
+    // Note: some buttons are added in HTML already (just to show smth @pageload).
+    var button = document.getElementById('exampleButton' + i);
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'exampleButton' + i;
+      button.style = `animation: fadein ${ Math.min(0.7, ++newB * 0.07) }s;`;
+      button.innerHTML =  i == 0 ?  'Clear' :
+                          i <= 1 ?  `Example ${i}` :  `${i}`;  ///`Ex.${i}`
+      (i == 0 ?  exampleButtonC :  exampleButtons)  .appendChild(button);
+    }
+    button.onclick = function() {
+      var nr = ~~this.id.replace(/[^\d]/g, '');
+      fillExample(nr);
+    }
+  }
+  // Also remove any buttons that were added too many in HTML.
+  while (el = document.getElementById('exampleButton' + i++))  el.remove();
+
+
+  // Fills an example in the VsmBox + the textarea, and shows a msg.
+  function fillExample(nr) {
+    var data = getExample(nr);
+    elVsmBox.initialValue = data;
+    boxValueToStateText(data);
+    setMsg(nr == 0 ? 'Cleared' : ('Example ' + nr));
+    makeVsmBoxNarrower(elVsmBox);
+  }
+
+  // Returns cloned data for an example. Returns the last example if `nr==-1`.
+  function getExample(nr) {
+    if (nr < 0)  nr += vsmExamples.length;
+    return clone(vsmExamples[nr]);
+  }
+
+  function clone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+
+
+  // --- Two-way binding:  vsm-box  <-->  stateText with nicely formatted JSON ---
+  //     (See vsm-box's "index-prod-standalone.html" for extra info).
+
+  // 1. Initial VsmBox ==> textarea.
+  boxValueToStateText(vsmBoxInitialValue);
+
+  // 2. If VsmBox changes ==> change textarea.
+  elVsmBox.addEventListener('change', function(event) {
+    // Note: we must access `$emit()`'s args via `events.detail[]`. This is
+    // different for a webpacked web-component vs. a pure Vue-component.
+    boxValueToStateText(event.detail[0]);
+  });
+
+  // 3. If textarea changes ==> change VsmBox.
+  elTxt.addEventListener('input', stateTextToBoxValue);
+
+
+  function fitTextAreaRowCount(el) {
+    var min = el.getAttribute('data-min-rows') || 1;
+    el.rows = Math.max(min, el.value.split('\n').length);
+  }
+
+  function fitAllTextAreas() {
+    fitTextAreaRowCount(elTxt);
+    fitTextAreaRowCount(elTxt2);
+  }
+
+  function boxValueToStateText(value) {         // (See vsm-box's index-dev.js).
+    currentVSM = value;
+    elTxt.value = lastAutoFilledText =
+      VsmJsonPretty(value, { json5: json5, maxLength: elTxtMaxCols });
+    setMsg(1);
+    updateRdf(value);
+    setPureSVGText({ afterVsmBoxChange: true });
+    fitAllTextAreas();
+  }
+
+  function stateTextToBoxValue() {              // (See vsm-box's index-dev.js).
+    var abort = lastAutoFilledText === elTxt.value;
+    lastAutoFilledText = false;
+    if (abort)  return;
+
+    try {
+      var vsm = JSON5.parse(elTxt.value);
+      elVsmBox.initialValue = currentVSM = vsm;
+      setMsg(-1);
+      updateRdf(vsm);
+      setPureSVGText();
+      fitAllTextAreas();
+    }
+    catch (err) {
+      setMsg(err.toString().replace('JSON5: ', ''));
+      updateRdf(null);
+    }
+  }
+
+
+
+  // --- RDF conversion output ---
+
+  function updateRdf(vsm) {
+    try {
+      var rdf = vsm && VsmToRdf(vsm);
+      elTxt2.value = rdf === null ?  '-' :  rdf === '' ?  ''/*'no data'*/ :  rdf;
+    }
+    catch(e) {
+      elTxt2.value = `Error: could not run 'vsm-to-rdf.min.js'.`;
+    }
+    fitTextAreaRowCount(elTxt2);
+  }
+
+
+  // --- SVG-export text, _IF_ this debug-helper element is activated ---
+
+  function setPureSVGText(opt) {
+    if (!elSVG)  return;
+
+    // If after a vsm-box change, conn-sorting can change it again =>two updates.
+    var delays = opt && opt.afterVsmBoxChange ?
+      [0, vsmBoxInitialSizes.theConnsResortDelay + 10] : [0];
+
+    delays.forEach(n => setTimeout(() => {
+      domToPureSVG(elVsmBox.querySelector('.vsm-box'),
+        { whiteBox,  svgInspect,  forDev : 1 });
+    }, n));
+  }
+
+
+  // --- Image export ---
+
+  elPNGBtn.onclick = function() {
+    makeVsmBoxNarrower(elVsmBox, {}, () => {
+      prepAndDL({ format: 'png', delay: dlDelay * 1e3, bitmapScale: imgScale });
+    });
+  }
+
+  elSVGBtn.onclick = function() {
+    makeVsmBoxNarrower(elVsmBox, {}, () => {
+      prepAndDL({ format: 'svg', delay: dlDelay * 1e3, keepSVGCursor, pureSVG });
+    });
+  }
+
+  function prepAndDL(options) {
+    if (autoWhiteBox && !whiteBox) {
+      whiteBox = true;
+      elVsmBox.classList.toggle('whiteBox');
+      elWhBTgl.checked = true;
+      setPureSVGText();
+    }
+    setTimeout(() => downloadVsmBoxImage(elVsmBox, options), 10);
+  }
+
+
+  // --- Clean up some placeholder-CSS, now/after everything is loaded. ---
+
+  setTimeout(() => {
+    var a = [...document.getElementsByClassName('loading')];
+    for (let el of a)  el.classList.remove('loading');
+  }, 10);
+
+
+
+
+  // --- Utility: make vsm-box's endTerm narrow (on load-example or export-img). ---
+
+  function makeVsmBoxNarrower(elVsmBox, opt, cb = false) {
+    // (This functionality may need to be enabled by <vsm-box> itself someday).
+
+    // 1. Detect which term currently has the input.
+    // 2. Bring the <input> to the end-term (if not already there).
+    // 3. Send a Ctrl+Del (to the input now at end-term) to make it narrow.
+    // 4. Bring the input back to the term it was at originally.
+    // 5. Unfocus it, if needed.
+
+    opt = { focusAfter: false,  ...opt };
+
+    const find    = sel => elVsmBox.querySelector('#vsmBox ' + sel);
+    const click   = e  => e.dispatchEvent(new MouseEvent   ('mousedown', {
+      bubbles: true }));
+    const ctrlDel = e  => e.dispatchEvent(new KeyboardEvent('keydown'  , {
+      bubbles: true,  keyCode: 46,  key: 'Delete',  ctrlKey: true }));
+
+    setTimeout(() => {                  // (For if vsm-box was just being added).
+      var e0 = find('.term.edit.inp');      // 1.
+      var el = find('.term.edit.end');      // 2.
+      var same = e0 === el;
+      el && !same && click(el);
+      setTimeout(() => {
+        el = find('.term.edit.end input');  // 3.
+        el && ctrlDel(el);
+        setTimeout(() => {
+          e0 && !same && click(e0);         // 4.
+          setTimeout(() => {
+            !opt.focusAfter && (el = find('input')) && el && el.blur();  // 5.
+            setTimeout(() => {
+              cb && cb();
+            }, 1);
+          }, 1);
+        }, 1);
+      }, 1);
+    }, 1);
+  }
+
+
+
+
+  // --- Utility: Tab in textareas ---
+
+  /**
+   * Adds Tab-functionality to the `el` textarea DOM-element. This makes Tab not
+   * move the browser focus away from it, and makes it a common code-editing key:
+   * - Tab indents, Shift-Tab unindents.
+   * - This work both in-line, and on a selection of lines.
+   */
+  function enableTabShiftTab(el) {
+    el.addEventListener('keydown', function(e) {
+      if (e.key !== 'Tab')  return;
+      e.preventDefault();
+      var X = this.selectionStart;
+      var Y = this.selectionEnd;
+      var A = this.value.slice(0, X);  // Part before selection.
+      var B = this.value.slice(X, Y);  // Selected part, if any.
+      var C = this.value.slice(Y);     // Part after selection.
+      if (X == Y) {  // No selection. Handle simple Tab and Shift+Tab.
+        if      (!e.shiftKey)      { B = '  ';            X = (Y += 2); }
+        else if (A.endsWith('  ')) { A = A.slice(0, -2);  X = (Y -= 2); }
+      }
+      else {
+        // Move anything before cursor on first selection line, into selection.
+        var regexPre = /(^|\n)(  [^\n]*)$/;
+        var pre = A.split('\n').pop().replace(regexPre, '$2');
+        if (pre.length) {
+          A = A.slice(0, -pre.length);
+          B = pre + B;
+          X -= pre.length;
+        }
+        // Move anything after cursor on last selection line, into selection.
+        var post = B.endsWith('\n') ?  '' :  C.split('\n')[0];
+        if (post.length) {
+          B += post;
+          C = C.slice(post.length);
+          Y += post.length;
+        }
+        if (!e.shiftKey) {              // Tab on selection.
+          B = B.split('\n').map(s => '  ' + s);
+          Y += B.length * 2;
+          D = B.pop();
+          if (D == '  ') { B.push('');  Y -= 2; }
+          else           { B.push(D );          }
+          B = B.join('\n');
+        }
+        else {                          // Shift+Tab on selection.
+          B = B.split('\n').map(s => {
+            if (s.startsWith('  '))  { s = s.slice(2);  Y -= 2; }
+            return s;
+          }).join('\n');
+          if (regexPre.test(A))  {
+            A = A.replace(regexPre, '$1$2');
+            X -= 2;  Y -= 2;
+          }
+        }
+      }
+      this.value = A + B + C;  this.selectionStart = X;  this.selectionEnd = Y;
+      stateTextToBoxValue();
+    });
+  }
+
+
+
+  // --- Utility: Image export (via dom-to-image-more + dom-to-pure-svg) ---
+
+  /**
+   * Generates image-data for the VsmBox at the given HTMLElement `elem`,
+   * (by calling `dom-to-image-more` or `dom-to-pure-svg.js`),
+   * and offers it in a Save As dialog, for to the user to download.
+   * + This requires the package 'dom-to-image-more'. Include it like this:
+   *     <script src="https://unpkg.com/dom-to-image-more/dist/dom-to-image-more.min.js">< /script>
+   * + `options` (optional, with all optional properties):
+   *   - filename {String}:
+   *       name without extension.
+   *   - format {String}:
+   *       supported formats are: 'png', 'svg',
+   *       (and probably some more, see the package 'dom-to-image-more').
+   *   - delay  {Number}:
+   *       will generate and send the data after this amount
+   *       of milliseconds. Useful when needing to clicking the download-button,
+   *       and then still having some time to interact with the vsm-box
+   *       (e.g. to highlight a conn, or to bring up the autocomplete panel).
+   *   - keepSVGCursor {Boolean}:
+   *       used when format is 'svg'; because it generates SVGs with
+   *       a `foreignObject` node, which includes an <input>. Then when opening
+   *       the SVG in a browser, that input gets focused, showing a text cursor.
+   *       When `false`, a small modification is made to the SVG-code to hide it.
+   *   - bgcolor {String}:
+   *       argument given directly to 'dom-to-image-more':
+   *       the background color used for the bitmap image.
+   *   - bitmapScale {Number}:
+   *       argument given directly to 'dom-to-image-more':
+   *       the scaling factor used for the bitmap (e.g. PNG) image.
+   *       (This is supported by 'dom-to-image-more', unlike 'dom-to-image').
+   *   - pureSVG {Boolean}:
+   *       combined with format 'svg', this exports an SVG file without
+   *       a `foreignObject` node that is unreadable in e.g. Illustrator 2018.
+   *       This output excludes e.g. opened autocomplete panels, and uses only
+   *       the vsm-box default CSS-styles.
+   *       It is a more lightweight output, and it preserves all of: terms,
+   *       styling, term types, connectors, and any conn-highlight.
+   *       This is done by 'domToPureSVG.js'.
+   */
+  function downloadVsmBoxImage(elem, options) {
+    var DefaultOptions = {
+      filename: 'vsm-box',
+      format: 'svg',
+      delay: 0,
+      keepSVGCursor: true,
+      bgcolor: '#fff',
+      bitmapScale: 5,
+      pureSVG: true
+    };
+    var opt = Object.assign({}, DefaultOptions, options);
+
+    if (opt.delay > 0) {
+      var delay = opt.delay;
+      opt.delay = 0;
+      return setTimeout(function () { downloadVsmBoxImage(elem, opt); }, delay);
+    }
+
+    var ext = opt.format.toLowerCase();
+    var el = elem.querySelector('.vsm-box');
+    var filename = opt.filename + '.' + ext;
+
+    if (opt.format == 'svg' && opt.pureSVG) {
+      domToPureSVG(el, {
+        whiteBox,
+        cb: s => {  // Behave async like `domtoimage[*]`.
+          s = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+          downloadUrl(s,  filename);
+        }
+      });
+    }
+    else {
+      var toImg = domtoimage['to' + ext[0].toUpperCase() + ext.substr(1)];  // => e.g. `domtoimage.toPng`.
+      if (!toImg) {
+        return console.error('Error: unsupported output format: ' + opt.format, error);
+      }
+      var imgOpt = { bgcolor: opt.bgcolor, scale: opt.bitmapScale };
+
+      toImg(el, imgOpt).then(function (dataUrl) {
+        if (opt.format == 'svg'  &&  !opt.keepSVGCursor) {
+          dataUrl = dataUrl
+          .replace(/(cursor: text;.{1,100})inline-block;/g, '$1none;');
+        }
+        downloadUrl(dataUrl, filename);
+      }).catch(function (error) {
+        console.error('Error with dom-to-image-more', error);
+      });
+    }
+  }
+
+
+
+  function downloadUrl(url, filename) {
+    var el = document.createElement('a');
+    el.href = url;
+    el.download = filename;
+    el.style.display = 'none';
+    document.body.appendChild(el);
+    el.click();
+    el.remove();
+  }
+
+})();

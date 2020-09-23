@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>vsm-box demo</title>
+
+  <!-- Include a vsm-dictionary, and a cacher for speed. -->
+  <script defer src="https://unpkg.com/vsm-dictionary-local@^2.6.0/dist/vsm-dictionary-local.min.js"></script>
+  <script defer src="https://unpkg.com/vsm-dictionary-cacher@^1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
+
+  <!-- Use the 'standalone' vsm-box (the version that is bundled with Vue etc.) -->
+  <script defer src="https://unpkg.com/vsm-box@^1.0.0/dist/vsm-box.standalone.min.js"></script>
+
+  <!-- A module to show VSM JS-objects in a readable way, as JSON5. -->
+  <script defer src="https://unpkg.com/vsm-json-pretty@^1.0.0/dist/vsm-json-pretty.min.js"></script>
+
+  <!-- A module to convert JSON5 (edited by the user) back to a JS object. -->
+  <script defer src="https://unpkg.com/json5@^2.1.0/dist/index.min.js"></script>
+
+  <!-- To download an image of the current vsm-box (PNG or SVG+foreignObjHTML). -->
+  <script defer src="https://unpkg.com/dom-to-image-more@^2.8.0/dist/dom-to-image-more.min.js"></script>
+
+  <!-- The webpack-built version of 'vsm-to-rdf'. -->
+  <script defer src="https://unpkg.com/vsm-to-rdf@^1.0.0/dist/vsm-to-rdf.min.js"></script>
+
+  <!-- This demo's main code. 'defer' makes that they are loaded asynchronously,
+       and executed (in order) after the HTML is loaded. -->
+  <script defer src="dict-data.js"></script>
+  <script defer src="vsm-data.js"></script>
+  <script defer src="dom-to-pure-svg.js"></script>
+  <script defer src="main.js"></script>
+
+  <!-- Keep the CSS in this HTML file to prevent a flash of unstyled content. -->
+  <style>
+
+
+
+/* ----- Set a general appearance. ----- */
+
+/* Give the page the same font as in vsm-box: WineTahoma if Tahoma is absent. */
+@font-face {
+  font-family: 'Tahoma';
+  src: local('Tahoma'), local('WineTahoma'),
+    url('https://vsm.github.io/font/wine-tahoma.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Tahoma';  src: local('Tahoma Bold'), local('Verdana Bold');
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* Some CSS resets */
+body,  button,  input { font-family: tahoma, arial, sans-serif;  margin: 0; }
+table,  tr,  td { margin: 0;  padding: 0;  border: 0;  border-collapse: collapse;
+  border-spacing: 0; }
+
+/* Make checkboxes neutral and the same across browsers. */
+input,  textarea { outline: none; }
+input[type=checkbox] { position: relative;  box-sizing: content-box;
+  appearance: none;  background: #fff;  border: 1px solid #b7b7b7;
+  border-radius: 2px;  top: 2px;  width: 11px;  height: 11px;  margin-right: 4px; }
+input[type=checkbox]:before { content: '';  display: block; }
+input[type=checkbox]:checked:before { transform: rotate(45deg);
+  border: 2px solid #4b4b4b;  border-top: 0;  border-left: 0;  border-radius: 0;
+  width: 3px;  height: 7px;  margin: -0.1px 3.1px; }
+
+/* Make label+checkbox units respond to hovering. */
+label { padding: 2px 5px 2px 3px;  margin-right: 3px;  cursor: default; }
+label:hover                { box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.1); }
+input[type=checkbox]:hover { box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.1);
+  border-color: #b2b2b2; }
+label,  input[type=checkbox] { transition: box-shadow 0.1s, border-color 0.1s;
+  user-select: none; }
+
+/* Also further neutralize button appearance. */
+button { appearance: none;  outline: none;  box-sizing: border-box;
+  height: 19px;  padding: 0 8px;  border-radius: 1px;
+  border: 0.5px solid #adadad;  transition: background 0.05s, transform 0.05s; }
+button        { background: #e4e4e4;  user-select: none; }
+button:hover  { background: #d8d8d8; }
+button:active { background: #c6c6c6;  transform: scale(0.99) translate(0.3px, 0); }
+
+
+
+/* ----- Specific style definitions. ----- */
+
+body .hide { display: none; }
+
+.main { padding: 5px 0 70px 60px;  background: #fff;  margin-top: 4px; }
+
+.headBox { font-size: 12px;  display: inline-block;  line-height: 17.5px;
+  margin: 0 0 23px -4px;  border-radius: 1px;  background: #f8f8f8;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16);
+  max-width: 750px; }
+
+.headSec { padding: 5px 6px; }
+.headSec:not(.intro) { border-top: 1px solid #ddd;
+  padding-left: 15px;  padding-right: 13px; }
+
+.headSec.intro { color: #777;s }
+.headSec.intro       b      { font-weight: normal;  color: #606060; }
+.headSec.intro       b.emph {                       color: #303030; }
+.headSec.intro .info b      {                       color: #a0a0a0; }
+.headSec.intro .info        { margin: 1px 0 0 0; }
+
+.headSec .info,  .headSec .info a,  .headSec .info a:visited {
+  font-size: 11.5px;  color: #a9a9a9; }
+.headSec .info a:hover { color: #6272e8; }
+
+.headSec.examples { padding-bottom: 0;  padding-top: 7px; }
+#exampleButtonsAll td { vertical-align: top; }
+.exampleButtons        { padding-left: 8px; }
+.exampleButtons button { margin: 0 0 6px 6px;  min-width: 30px; }
+
+.headSec.controls { user-select: none; }
+.controlRow label { font-size: 11.5px;  color: #555; }
+
+.controlRow.optionControls { margin: -1px 0 5px -1px; }
+.controlRow.figControls { padding: 0 0 0 2px; }
+.controlRow.figControls button { vertical-align: text-bottom;
+  margin-bottom: -1.66px; }
+#toggleRDF + .info               { color: #a2a2a2;  margin-left: 1px; }
+#toggleRDF:not(:checked) + .info { display: none; }
+#buttonGetSVG.pureSVG .plusHTML  { display: none; }
+#buttonGetPNG { padding: 0 6px; }
+.figControls .number { width: 15px;  margin-left: 4px;  padding: 1px 2px;
+  border: 0.75px solid #b7b7b7; }
+.controlRow .info { font-size: 10.5px;  line-height: 12px; }
+
+.msg { color: #aaa;  font-size: 11px;  height: 12px;  text-align: right;
+  margin: 10px 0 2px 0; }
+#msg.largesep { margin-top: 90px; }
+#msg.smallsep { margin-top: 6px; }
+#msg2 { margin-top: 14px; }
+
+#svg { margin: 0 0 28px; }
+#svg > div { display: block;  margin: 0 0 8px;  border-color: #000; }
+#svgFig { user-select: none; }
+
+.stateText { font-size: 11px;  font-family: consolas, courier, monospace;
+  color: #222;  white-space: pre;  display: block;  box-sizing: border-box;
+  border: 1px solid #e7e7e7;  resize: horizontal;  max-width: 100%;
+  line-height: 13px; padding: 1px; }
+
+#rdfText { background: #fdfdfd; }
+
+
+
+/* ----- For elements that are added by JS-code: gracefully add them,
+         and/or prevent a flash of undersized content.                ----- */
+
+.headSec.examples.loading { min-height: 25px; }
+@keyframes fadein {  /* Used in the JS-code, for `#exampleButtonsAll button`. */
+  from { opacity: 0; }  to { opacity: 1; } }
+.vsm-box-wrap.loading .vsm-box { visibility: hidden;  }
+.vsm-box-wrap.loading { width: 200px;  height:  79px;
+  display: block;  background-color: #f8f8f8;
+  background: linear-gradient(to right, #fff 0%, #fbfbfb 10%, #fff 100%);
+  box-sizing: content-box;  border: 1px solid #d3d9e5;
+  animation: wrap-gradi 1.5s linear 0.5s infinite; /*ease-out alternate*/
+}
+@keyframes wrap-gradi {
+  to { background-position: 200px 0; }
+}
+
+
+/* ----- vsm-box style tweaks. ----- */
+
+/* To demo the use of font-awesome icons in some terms' `descr`. */
+.vsm-box .item i.fas  { margin-right: 3px; }
+.vsm-box i.sep:before { content: "·";  margin: 0 4px;
+  font-style: normal;  font-size: 8px;  color: #777; }
+.vsm-box i:before     { color: #696969; }
+
+
+/* To show `tweakID` (visible when `useTweaks` is active). */
+.vsm-box .term.inp .item .item-part-extra        { font-size: 10px; color: #d2d2d2; }
+.vsm-box .term.inp .item.item-state-active .item-part-extra {       color: #ccc; }
+.vsm-box .term.inp .item .item-part-extra:before { font-size: 10px; content: "("; margin-left: 1.5px; }
+.vsm-box .term.inp .item .item-part-extra:after  { font-size: 10px; content: ")"; margin-right: 1px; }
+
+
+/* Make autocomplete-panel less wide than default. */
+                  .vsm-box .term.inp .list { min-width: 160px; }
+/* Or even less wide. */
+#vsmBox.useTweaks .vsm-box .term.inp .list { min-width: 140px; }
+
+/* Smaller autocomplete-panel shadow. */
+#vsmBox.useTweaks .vsm-box .term.inp .list {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.23); }
+
+/* For a 'white' vsm-box.  (We keep 1px border here so new PNGs stay same size). */
+#vsmBox.whiteBox .vsm-box svg.conns { background: #fff; }
+#vsmBox.whiteBox .vsm-box { border: 1px solid #fff; }
+
+
+/* To achieve pixel-precise alignment of vsmAC's TheList and the bottom of
+   vsm-box on high-DPI screens: one could use a hard-coded _integer_ height
+   for inputs:
+.vsm-box .term.inp input.input { height: 13px; }
+   But then it would cut off the lower part of 'g'-s a bit again, somehow,
+   esp. in exported PNGs.
+   So we use the following instead for now, optimized for Chrome and
+   a high-DPI screen with scaling factor 3:
+*/
+.vsm-box .term.inp input.input { height: 14px;  margin-top: -0.667px; }
+.vsm-box .term      span.label { height: 16px;  margin-top: -0.333px; }
+/*/
+.vsm-box .term.inp input.input,
+.vsm-box .term      span.label { margin-top: -0.5px; }
+/**/
+
+
+/* (Make Firefox not put a '…' in some terms in PNGs (on high-dpi screen)). */
+/* .vsm-box .term span.label { text-overflow: clip; } */
+
+
+/* When setting a font: reach all elements under TheTerms, including <input>. * /
+.vsm-box .terms *,
+.vsm-box .term.inp input.input { font-family: verdana, tahoma, sans-serif; }
+/**/
+
+
+  </style>
+</head>
+
+
+
+<body>
+  <div class="main">
+    <div class="headBox">
+      <div class="headSec intro">
+        • Below is a <b class="emph">VSM-box</b>,
+        and its <b class="emph">content as JSON</b> underneath.
+        <br>
+        • They are <b>linked</b>:
+        <b>edit</b> one and the other will update.
+        &thinsp; So you can <b>copy-paste VSM-JSON</b>.
+        <br>
+        • This demo provides only demo dictionary terms,
+        &thinsp;but you can make new terms with 'Create' in autocomplete.
+        <br>
+        • Also here:
+        &nbsp;conversion to <b>RDF</b>,
+        &nbsp;<b>example</b> data,
+        &nbsp;<b>image</b> export.
+        <br>
+        <div class="info">• About
+          <b>VSM</b>:
+          <a href="https://vsm.github.io">vsm.github.io</a>.&nbsp;
+          | <b>VSM-box</b>:
+          <a href="http://vsm.github.io/vsm-pages/examples">examples</a>,
+          <a href="https://vsm.github.io/vsm-pages/examples#vsm-box">use</a>.&nbsp;
+          | <b>Cite</b>:
+          <a href="https://doi.org/10.20944/preprints202007.0486.v2">VSM</a>,
+          <a href="https://doi.org/10.20944/preprints202007.0557.v1">vsm-box</a>.&nbsp;
+          | <span style="filter: grayscale() brightness(1.08) opacity(0.52)"
+          >&#x1F4B3;</span>:<!--💳-->
+          <a href="https://github.com/sponsors/stcruy">sponsor VSM</a>.
+        </div>
+      </div>
+
+      <div class="headSec examples loading">
+        <table id="exampleButtonsAll"><tr>
+          <td id="exampleButtonC"
+            ><button id="exampleButton0">Clear</button
+          ></td>
+          <td id="exampleButtons" class="exampleButtons"
+            ><button id="exampleButton1">Example 1</button
+            ><!-- Auto-added/removed based on available example count.--></td>
+        </tr></table>
+      </div>
+
+      <div class="headSec controls">
+        <div class="controlRow optionControls">
+          <label ><input id="toggleWhiteBox"   type="checkbox">White box.</label
+          ><label><input id="toggleNoFeet"     type="checkbox">Hide feet.</label
+          ><label><input id="toggleCreateItem" type="checkbox"
+            >Add 'Create' in autocomplete.</label
+          ><label><input id="toggleUseTweaks"  type="checkbox"
+            ><span class="info">Tweaks.</span></label
+          ><label><input id="toggleJSON5"      type="checkbox">JSON5.</label
+          ><label style="display: none;"><input id="toggleKeepSVGCursor"
+            type="checkbox">Keep cursor in SVG.</label
+          ><label><input id="togglePureSVG"    type="checkbox">Pure SVG.</label
+          ><label><input id="toggleRDF"        type="checkbox">Show RDF<span
+            class="info note"> at bottom</span>.</label>
+        </div>
+        <div class="controlRow figControls">
+          <button             id="buttonGetSVG" class="pureSVG">Download
+            SVG<span class="plusHTML">+html</span></button>
+          &nbsp;(or <button   id="buttonGetPNG">PNG</button>
+          scale<input         id="inputImgScale" class="number">),
+          &nbsp;delay<input   id="inputDlDelay"  class="number">s,
+          &nbsp;<label><input id="toggleAutoWhiteBox" type="checkbox"
+            >auto-white.</label>
+          <span class="info">(For PNG use Chrome.
+          &nbsp;EMF <a href="convert-svg-to-emf-properly.txt" target="_blank"
+            >tips</a>.)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vsm-box-wrap loading">
+      <vsm-box id="vsmBox"></vsm-box>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- SVG export inspection code. Is shown when activated by `SVGInspect`. -->
+    <div id="svg" class="hide"
+      ><div id="svgFig"  ></div
+      ><div id="svgText" class="stateText loading"></div
+      ><div id="svgHtml" class="stateText loading"></div
+      ></div>
+
+    <textarea id="stateText" class="stateText loading" data-min-rows="18"
+      rows="18" cols="120" spellcheck="false"></textarea>
+
+    <div id="rdf" class="hide">
+      <div id="msg2" class="msg">--&gt; vsm-to-rdf</div>
+      <textarea id=  "rdfText" class="stateText loading" data-min-rows="1"
+        rows="1" cols="120" spellcheck="false" readonly></textarea>
+    </div>
+  </div>
+
+  <!-- Here it may be easiest to override vsm-box/-autocomplete's default CSS. -->
+  <style>  /* E.g.: * /
+    .vsm-box .vsm-autocomplete .item-type-literal { color: #55a; }  /**/
+  </style>
+
+
+
+  <!-- Run some code after requesting all dependencies, and loading most HTML -->
+  <script>
+    (function() {
+
+      const HowManyExamplesToExpect = 8;
+
+      // Add some Example buttons alreay, before the main code does so. This
+      // prevents a hidden+shown flash.  Main code adds/removes these as needed.
+      var exampleButtons = document.getElementById('exampleButtons');
+      for (var i = 2;  i <= HowManyExamplesToExpect;  i++) {
+        button = document.createElement('button');
+        button.id = 'exampleButton' + i;
+        button.innerHTML = i;
+        exampleButtons.appendChild(button);
+      }
+
+      // Load font-awesome icons (for demoing their use in some terms' `descr`).
+      // Placed here so more important parts will be loaded first.
+      var css = document.createElement('link');
+      css.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css';
+      css.rel = 'stylesheet';
+      css.type = 'text/css';
+      setTimeout(
+        () => document.getElementsByTagName('head')[0].appendChild(css),  10
+      );
+
+    })();
+  </script>
+</body>
+</html>
