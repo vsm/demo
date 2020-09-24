@@ -99,7 +99,7 @@ body .hide { display: none; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
   padding-left: 15px;  padding-right: 13px; }
 
-.headSec.intro { color: #777;s }
+.headSec.intro, .headSec.intro a, .headSec.intro a:visited { color: #777; }
 .headSec.intro       b      { font-weight: normal;  color: #606060; }
 .headSec.intro       b.emph {                       color: #303030; }
 .headSec.intro .info b      {                       color: #a0a0a0; }
@@ -107,6 +107,7 @@ body .hide { display: none; }
 
 .headSec .info,  .headSec .info a,  .headSec .info a:visited {
   font-size: 11.5px;  color: #a9a9a9; }
+.headSec.intro a:hover,
 .headSec .info a:hover { color: #6272e8; }
 
 .headSec.examples { padding-bottom: 0;  padding-top: 7px; }
@@ -127,7 +128,7 @@ body .hide { display: none; }
 #buttonGetPNG { padding: 0 6px; }
 .figControls .number { width: 15px;  margin-left: 4px;  padding: 1px 2px;
   border: 0.75px solid #b7b7b7; }
-.controlRow .info { font-size: 10.5px;  line-height: 12px; }
+.controlRow .info, .controlRow .info a { font-size: 10.5px;  line-height: 12px; }
 
 .msg { color: #aaa;  font-size: 11px;  height: 12px;  text-align: right;
   margin: 10px 0 2px 0; }
@@ -239,13 +240,14 @@ body .hide { display: none; }
         <b>edit</b> one and the other will update.
         &thinsp; So you can <b>copy-paste VSM-JSON</b>.
         <br>
-        • This demo provides only demo dictionary terms,
-        &thinsp;but you can make new terms with 'Create' in autocomplete.
+        • This demo uses only stub vsm-dictionaries,
+        &thinsp;but you can add new terms with 'Create' in autocomplete.
         <br>
         • Also here:
         &nbsp;conversion to <b>RDF</b>,
         &nbsp;<b>example</b> data,
-        &nbsp;<b>image</b> export.
+        &nbsp;<b>image</b> export
+        &thinsp; – &thinsp;or <b><a href="info.txt">More info</a></b>.
         <br>
         <div class="info">• About
           <b>VSM</b>:
@@ -296,9 +298,9 @@ body .hide { display: none; }
           &nbsp;delay<input   id="inputDlDelay"  class="number">s,
           &nbsp;<label><input id="toggleAutoWhiteBox" type="checkbox"
             >auto-white.</label>
-          <span class="info">(For PNG use Chrome.
-          &nbsp;EMF <a href="convert-svg-to-emf-properly.txt" target="_blank"
-            >tips</a>.)</span>
+          <span class="info">For PNG use Chrome.
+          &nbsp; SVG➝EMF <a href="convert-svg-to-emf-properly.txt"
+            >tips</a>.</span>
         </div>
       </div>
     </div>

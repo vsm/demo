@@ -11,7 +11,7 @@ How to convert SVG to EMF  (and avoid loss of precision or font data):
       inkscape vsm-box.svg --export-filename=vsm-box.emf
 
   • Or make a batch file that
-    + converts   1 SVG file  if given as argument 1, or
+    + converts   1 SVG file  if given as 1 argument, or
     + converts all SVG-files in the current folder if given 0 arguments:
 
     svg2emf.bat:
@@ -45,10 +45,13 @@ How to convert SVG to EMF  (and avoid loss of precision or font data):
     + with 'Scale Corners' and 'Scale Strokes & Effects' checked.
   • File -> Export -> Export As --> [Enhanced Metafile (*.EMF)]
 
-  Next, in Word:
-  + Insert --> Pictures
 
-  Finally, when converting to a PDF:
-  + Make sure that your PDF converter generates vector data, not bitmaps.
+↪ Next, in Word:
+  • Insert --> Pictures
+
+  • Finally, when converting to a PDF:
+    Make sure that your PDF converter generates vector data, not bitmaps.
     E.g. via menu Acrobat -> Create PDF.  Also use e.g. 1200dpi.
-    (Zoom in to verify).
+    Then zoom in on the PDF to verify vector data.
+
+
