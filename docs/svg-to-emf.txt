@@ -1,5 +1,8 @@
 How to convert SVG to EMF  (and avoid loss of precision or font data):
 
+  + Note: You should have the font Tahoma installed (to properly see the SVG in the first place).
+    On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma .
+
 
 ► Command line with Inkscape:
 
@@ -30,8 +33,6 @@ How to convert SVG to EMF  (and avoid loss of precision or font data):
   + Note: A bug in Inkscape 1.0.1 adds a white border to the bottom-left of the exported EMF.
   + Note: This one-liner may work in some future Inkspace version:
       inkscape "%~1" --actions="select-all; object-to-path; stroke-to-path; fit-canvas-to-selection" --export-type="emf"
-  + Note: You should have the font Tahoma installed.
-    On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma .
 
 
 ► Or manually with Adobe Illustrator (this avoids Inkscape's white border):
