@@ -61,7 +61,7 @@
     document.getElementById('svg').classList.remove('hide');
     elMsg.className += ' smallsep';
     var elSVGFig = document.getElementById('svgFig');
-    var elSVG    = document.getElementById('svgText');
+    var elSVGTxt = document.getElementById('svgText');
     var elSVGHtm = document.getElementById('svgHtml');
   }
 
@@ -250,9 +250,9 @@
 
   // --- Initialize the 'stateText' (JSON) and 'rdfText' textareas ---
 
-  elTxt.cols  = elTxtMaxCols;
-  elTxt2.cols = elTxtMaxCols;
-  enableTabShiftTab(elTxt);  // (Esp. so Tab won't move focus onto Clear button).
+  elTxt.cols  = elTxt2.cols  = elTxtMaxCols;
+  elTxt.value = elTxt2.value = '';
+  enableTabShiftTab(elTxt);  // (Also makes Tab not move focus onto Clear button).
 
 
 
@@ -288,7 +288,8 @@
     if (!button) {
       button = document.createElement('button');
       button.id = 'exampleButton' + i;
-      button.style = `animation: fadein ${ Math.min(0.7, ++newB * 0.07) }s;`;
+      button.style =
+        `animation: example-buttons-fadein ${ Math.min(0.7, ++newB * 0.07) }s;`;
       button.innerHTML =  i == 0 ?  'Clear' :
                           i <= 1 ?  `Example ${i}` :  `${i}`;  ///`Ex.${i}`
       (i == 0 ?  exampleButtonC :  exampleButtons)  .appendChild(button);
@@ -398,16 +399,20 @@
   // --- SVG-export text, _IF_ this debug-helper element is activated ---
 
   function setPureSVGText(opt) {
-    if (!elSVG)  return;
+    if (!elSVGTxt)  return;
 
     // If after a vsm-box change, conn-sorting can change it again =>two updates.
     var delays = opt && opt.afterVsmBoxChange ?
       [0, vsmBoxInitialSizes.theConnsResortDelay + 10] : [0];
 
-    delays.forEach(n => setTimeout(() => {
+    delays.forEach(delay => setTimeout(() => {
       domToPureSVG(elVsmBox.querySelector('.vsm-box'),
-        { whiteBox,  svgInspect,  forDev : 1 });
-    }, n));
+        { whiteBox,
+          forDev : 1,
+          ...(svgInspect && { svgInspect: { elSVGFig, elSVGTxt, elSVGHtm } })
+        }
+      );
+    }, delay));
   }
 
 
@@ -432,7 +437,12 @@
       elWhBTgl.checked = true;
       setPureSVGText();
     }
-    setTimeout(() => downloadVsmBoxImage(elVsmBox, options), 10);
+
+    setTimeout(() => downloadVsmBoxImage(elVsmBox,
+      { ...options,
+        ...(svgInspect && { svgInspect: { elSVGFig, elSVGTxt, elSVGHtm } })
+      }
+    ), 100);  // (At least 'png' output needs some time for things to settle).
   }
 
 
@@ -447,7 +457,7 @@
       var el = elVsmBox.querySelector('#vsmBox .term.edit.inp');
       el && el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     }
-  }, 10);
+  }, 100);
 
 
 
@@ -578,7 +588,7 @@
    *       and then still having some time to interact with the vsm-box
    *       (e.g. to highlight a conn, or to bring up the autocomplete panel).
    *   - keepSVGCursor {Boolean}:
-   *       used when format is 'svg'; because it generates SVGs with
+   *       used when  `format=='svg' && !pureSVG`  as that generates SVGs with
    *       a `foreignObject` node, which includes an <input>. Then when opening
    *       the SVG in a browser, that input gets focused, showing a text cursor.
    *       When `false`, a small modification is made to the SVG-code to hide it.
@@ -597,6 +607,8 @@
    *       It is a more lightweight output, and it preserves all of: terms,
    *       styling, term types, connectors, and any conn-highlight.
    *       This is done by 'domToPureSVG.js'.
+   *   - svgInspect {Object}:
+   *       (an object for inspection purposes during development work).
    */
   function downloadVsmBoxImage(elem, options) {
     var DefaultOptions = {
@@ -606,7 +618,8 @@
       keepSVGCursor: true,
       bgcolor: '#fff',
       bitmapScale: 5,
-      pureSVG: true
+      pureSVG: true,
+      svgInspect: false
     };
     var opt = Object.assign({}, DefaultOptions, options);
 
@@ -623,6 +636,7 @@
     if (opt.format == 'svg' && opt.pureSVG) {
       domToPureSVG(el, {
         whiteBox,
+        svgInspect,
         cb: s => {  // Behave async like `domtoimage[*]`.
           s = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
           downloadUrl(s,  filename);

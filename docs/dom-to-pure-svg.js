@@ -87,8 +87,7 @@ function domToPureSVG(e, opt) {
                         ` width="${       boxW }" height="${ boxH }"`);
 
       return [
-        `<svg${tags} xmlns="http://www.w3.org/2000/svg" ` +
-          `xmlns:xlink="http://www.w3.org/1999/xlink">`,
+        `<svg${tags} xmlns="http://www.w3.org/2000/svg">`,
         f.style(e, o),  /* f.fontData(e, o), */
         (o.addBorder ? f.borderedBox :  o.whiteBox ? f.whiteBox :  f.box)(e, o),
         '</svg>'
@@ -593,9 +592,10 @@ function domToPureSVG(e, opt) {
 
 
   if (opt.svgInspect && opt.forDev) {  // Temp. data-inspection helper code.
+    var { elSVGFig, elSVGTxt, elSVGHtm } = opt.svgInspect;
     // Show the SVG as image and as text.
     elSVGFig.innerHTML = s;
-    elSVG   .innerHTML = s
+    elSVGTxt.innerHTML = s
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/@font-face/g, '_font-face');  // No global @ff-interference.
 

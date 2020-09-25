@@ -68,7 +68,7 @@ input[type=checkbox]:checked:before { transform: rotate(45deg);
 
 /* Make label+checkbox units respond to hovering. */
 label { padding: 2px 5px 2px 3px;  margin-right: 3px;  cursor: default; }
-label:hover                { box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.1); }
+label:hover                { box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.12); }
 input[type=checkbox]:hover { box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.1);
   border-color: #b2b2b2; }
 label,  input[type=checkbox] { transition: box-shadow 0.1s, border-color 0.1s;
@@ -93,11 +93,11 @@ body .hide { display: none; }
 .headBox { font-size: 12px;  display: inline-block;  line-height: 17.5px;
   margin: 0 0 23px -4px;  border-radius: 1px;  background: #f8f8f8;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16);
-  max-width: 750px; }
+  max-width:  800px; }
 
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
-  padding-left: 15px;  padding-right: 13px; }
+  padding-left: 15px;  padding-right: 14px; }
 
 .headSec.intro, .headSec.intro a, .headSec.intro a:visited { color: #777; }
 .headSec.intro       b      { font-weight: normal;  color: #606060; }
@@ -153,16 +153,31 @@ body .hide { display: none; }
          and/or prevent a flash of undersized content.                ----- */
 
 .headSec.examples.loading { min-height: 25px; }
-@keyframes fadein {  /* Used in the JS-code, for `#exampleButtonsAll button`. */
+@keyframes example-buttons-fadein {  /* Used in the JS-code. */
   from { opacity: 0; }  to { opacity: 1; } }
+
 .vsm-box-wrap.loading .vsm-box { visibility: hidden;  }
 .vsm-box-wrap.loading { width: 200px;  height:  79px;
-  display: block;  background-color: #f8f8f8;
-  background: linear-gradient(to right, #fff 0%, #fbfbfb 10%, #fff 100%);
-  box-sizing: content-box;  border: 1px solid #d3d9e5;
-  animation: wrap-gradi 1.5s linear 0.5s infinite; /*ease-out alternate*/
+  display: block;  background: #fbfbfb;
+  box-sizing: content-box;
+  border: 1px solid #d3d9e5;
+  animation: vsm-box-wrap-loading 1.5s linear 0.3s infinite;
+  position: relative;
 }
-@keyframes wrap-gradi {
+.vsm-box-wrap.loading:before {
+  content: " ";
+  position: absolute;
+  bottom: 0;
+  height: 19px;
+  width: 100%;
+  background: #fff;
+  background: linear-gradient(to right, #fff 0%, #f9f9f9 10%, #fff 30%);
+  animation: vsm-box-wrap-loading-before 1.5s linear 0.3s infinite;
+}
+@keyframes vsm-box-wrap-loading {
+  50%, 75% { box-shadow: 1px 0 0 1px rgba(211, 217, 229, 0.5); }
+}
+@keyframes vsm-box-wrap-loading-before {
   to { background-position: 200px 0; }
 }
 
@@ -244,10 +259,10 @@ body .hide { display: none; }
         &thinsp;but you can add new terms with 'Create' in autocomplete.
         <br>
         • Also here:
-        &nbsp;conversion to <b>RDF</b>,
-        &nbsp;<b>example</b> data,
-        &nbsp;<b>image</b> export
-        &thinsp; – &thinsp;or <b><a href="info.txt">More info</a></b>.
+        &nbsp;VSM <b>examples</b>,
+        &nbsp;<b>image</b> export,
+        &nbsp;<b>RDF</b> conversion,
+        &nbsp;and <b><a href="info.txt">more info</a></b>.
         <br>
         <div class="info">• About
           <b>VSM</b>:
@@ -339,7 +354,7 @@ body .hide { display: none; }
   <script>
     (function() {
 
-      const HowManyExamplesToExpect = 8;
+      const HowManyExamplesToExpect = 16;
 
       // Add some Example buttons alreay, before the main code does so. This
       // prevents a hidden+shown flash.  Main code adds/removes these as needed.
@@ -361,6 +376,9 @@ body .hide { display: none; }
         () => document.getElementsByTagName('head')[0].appendChild(css),  10
       );
 
+      // Prevent possoble flash of long text+scrollbars on page-reload.
+      document.getElementById('stateText').value = '';
+      document.getElementById('rdfText').value = '';
     })();
   </script>
 </body>
