@@ -258,9 +258,10 @@
 
   // --- Initialize the 'msg' elements (above the textareas) ---
 
-  function setElMsgWidth() {
-    wsTA1.style.width = wsTA2.style.width =
-    elMsg.style.width = elMsg2.style.width = getComputedStyle(elTxt).width;
+  function setElMsgWidth(basedOnEl = elTxt) {
+    wsTA1.style.width = wsTA2 .style.width =
+    elTxt.style.width = elTxt2.style.width =
+    elMsg.style.width = elMsg2.style.width = getComputedStyle(basedOnEl).width;
   }
 
   function setMsg(msg) {  // `msg`: 1 / -1 / fill-example name / error msg.
@@ -273,9 +274,10 @@
       ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
   }
 
-  window.addEventListener('resize', setElMsgWidth);
-  elTxt .addEventListener('mouseup', setElMsgWidth);
-  setElMsgWidth();
+  window.addEventListener('resize ', () => setElMsgWidth(elTxt ));
+  elTxt .addEventListener('mouseup', () => setElMsgWidth(elTxt ));
+  elTxt2.addEventListener('mouseup', () => setElMsgWidth(elTxt2));
+  setElMsgWidth(elTxt);
   setMsg('');
 
 
