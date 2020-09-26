@@ -17,3 +17,9 @@ More info:
 
 • For info on how to convert SVG to EMG properly (e.g. for Word or Google Docs),
   click the `EMF tips` link.
+
+
+• If you give a live demo or presentation of VSM, you can let the audience focus on the vsm-box
+  alone by moving the top information panel (and/or bottom JSON textarea) out of sight.
+  You can do this with the vertical-space resize-handles, located to the right, just above the
+  JSON textarea's right border.

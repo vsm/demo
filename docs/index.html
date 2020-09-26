@@ -4,11 +4,13 @@
   <meta charset="UTF-8"/>
   <title>vsm-box demo</title>
 
-  <!-- Include a vsm-dictionary, and a cacher for speed. -->
+  <!-- A vsm-dictionary. This one serves terms+IDs from a local data-object. -->
   <script defer src="https://unpkg.com/vsm-dictionary-local@^2.6.0/dist/vsm-dictionary-local.min.js"></script>
+
+  <!-- The vsm-dictionary-cacher for speed. Here just to show how to use it. -->
   <script defer src="https://unpkg.com/vsm-dictionary-cacher@^1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
 
-  <!-- Use the 'standalone' vsm-box (the version that is bundled with Vue etc.) -->
+  <!-- ** The 'standalone' vsm-box (the version that is bundled with Vue etc.). ** -->
   <script defer src="https://unpkg.com/vsm-box@^1.0.0/dist/vsm-box.standalone.min.js"></script>
 
   <!-- A module to show VSM JS-objects in a readable way, as JSON5. -->
@@ -83,7 +85,6 @@ button:hover  { background: #d8d8d8; }
 button:active { background: #c6c6c6;  transform: scale(0.99) translate(0.3px, 0); }
 
 
-
 /* ----- Specific style definitions. ----- */
 
 body .hide { display: none; }
@@ -91,13 +92,14 @@ body .hide { display: none; }
 .main { padding: 5px 0 70px 60px;  background: #fff;  margin-top: 4px; }
 
 .headBox { font-size: 12px;  display: inline-block;  line-height: 17.5px;
-  margin: 0 0 23px -4px;  border-radius: 1px;  background: #f8f8f8;
-  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16);
-  max-width:  800px; }
+  margin: 0 0 0 -4px;  border-radius: 1px;  background: #f8f8f8;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16);  max-width:  800px; }
 
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
-  padding-left: 15px;  padding-right: 14px; }
+  padding-left: 15px;  padding-right: 15px; }
+
+.headSec button { font-size: 13px;  color: #222; }
 
 .headSec.intro, .headSec.intro a, .headSec.intro a:visited { color: #777; }
 .headSec.intro       b      { font-weight: normal;  color: #606060; }
@@ -110,30 +112,31 @@ body .hide { display: none; }
 .headSec.intro a:hover,
 .headSec .info a:hover { color: #6272e8; }
 
+.headSec.intro #vsmIs { border-left: 0px solid #777;  margin-left: 5px;
+  color: #999; }
+
 .headSec.examples { padding-bottom: 0;  padding-top: 7px; }
 #exampleButtonsAll td { vertical-align: top; }
 .exampleButtons        { padding-left: 8px; }
 .exampleButtons button { margin: 0 0 6px 6px;  min-width: 30px; }
 
 .headSec.controls { user-select: none; }
-.controlRow label { font-size: 11.5px;  color: #555; }
+.controlRow { font-size: 11.5px;  color: #555; }
 
-.controlRow.optionControls { margin: -1px 0 5px -1px; }
-.controlRow.figControls { padding: 0 0 0 2px; }
+.controlRow.optionControls { margin: 0 0 5px -1px; }
+.controlRow.figControls { padding: 0 0 1px 2px; }
 .controlRow.figControls button { vertical-align: text-bottom;
   margin-bottom: -1.66px; }
 #toggleRDF + .info               { color: #a2a2a2;  margin-left: 1px; }
 #toggleRDF:not(:checked) + .info { display: none; }
 #buttonGetSVG.pureSVG .plusHTML  { display: none; }
 #buttonGetPNG { padding: 0 6px; }
-.figControls .number { width: 15px;  margin-left: 4px;  padding: 1px 2px;
-  border: 0.75px solid #b7b7b7; }
+.figControls .number { width: 15px;  margin: 0 0 0 4px;  padding: 2px 2px 1px;
+  border: 0.75px solid #b7b7b7;  font-size: 12.5px;  color: #333; }
 .controlRow .info, .controlRow .info a { font-size: 10.5px;  line-height: 12px; }
 
 .msg { color: #aaa;  font-size: 11px;  height: 12px;  text-align: right;
-  margin: 10px 0 2px 0; }
-#msg.largesep { margin-top: 90px; }
-#msg.smallsep { margin-top: 6px; }
+  margin: 0 0 2px 0; }
 #msg2 { margin-top: 14px; }
 
 #svg { margin: 0 0 28px; }
@@ -147,6 +150,15 @@ body .hide { display: none; }
 
 #rdfText { background: #fdfdfd; }
 
+
+/* ----- The vertical-space resizers above and below the vsm-box.. ----- */
+
+.wsTA { border: 0;  color: #fff;  border-color: #fff;  resize: vertical;
+  cursor: default;  padding: 0;  margin: 0;  line-height: 0px;  height: 10px; }
+#wsTA1 { height: 23px; }
+#wsTA2 { height: 10px; }
+#wsTA2.largesep { height: 90px; }
+#wsTA2.smallsep { height: 6px; }
 
 
 /* ----- For elements that are added by JS-code: gracefully add them,
@@ -171,14 +183,16 @@ body .hide { display: none; }
   height: 19px;
   width: 100%;
   background: #fff;
-  background: linear-gradient(to right, #fff 0%, #f9f9f9 10%, #fff 30%);
+  background: linear-gradient(to right, #fff 0%, #f7f7f7 15%, #fff 30%);
   animation: vsm-box-wrap-loading-before 1.5s linear 0.3s infinite;
+  filter: brightness(1.03);
 }
 @keyframes vsm-box-wrap-loading {
   50%, 75% { box-shadow: 1px 0 0 1px rgba(211, 217, 229, 0.5); }
 }
 @keyframes vsm-box-wrap-loading-before {
   to { background-position: 200px 0; }
+  25%, 75% { filter: brightness(1); }
 }
 
 
@@ -261,11 +275,14 @@ body .hide { display: none; }
         • Also here:
         &nbsp;VSM <b>examples</b>,
         &nbsp;<b>image</b> export,
-        &nbsp;<b>RDF</b> conversion,
-        &nbsp;and <b><a href="info.txt">more info</a></b>.
+        &nbsp;<b>RDF</b> conversion.
+        &nbsp; &nbsp; | &nbsp; <span id="vsmIs">
+          (VSM = a <b>semantic model +</b> a <b>user interface</b>
+          that enables it).
+        </span>
         <br>
-        <div class="info">• About
-          <b>VSM</b>:
+        <div class="info">
+          • About <b>VSM</b>:
           <a href="https://vsm.github.io">vsm.github.io</a>.&nbsp;
           | <b>VSM-box</b>:
           <a href="http://vsm.github.io/vsm-pages/examples">examples</a>,
@@ -273,9 +290,8 @@ body .hide { display: none; }
           | <b>Cite</b>:
           <a href="https://doi.org/10.20944/preprints202007.0486.v2">VSM</a>,
           <a href="https://doi.org/10.20944/preprints202007.0557.v1">vsm-box</a>.&nbsp;
-          | <span style="filter: grayscale() brightness(1.08) opacity(0.52)"
-          >&#x1F4B3;</span>:<!--💳-->
-          <a href="https://github.com/sponsors/stcruy">sponsor VSM</a>.
+          | $: <a href="https://github.com/sponsors/stcruy">sponsor VSM</a>.&nbsp;
+          | Demo: <b><a href="info.txt">more info</a></b>.
         </div>
       </div>
 
@@ -320,9 +336,13 @@ body .hide { display: none; }
       </div>
     </div>
 
+    <textarea id="wsTA1" class="stateText wsTA"></textarea>
+
     <div class="vsm-box-wrap loading">
       <vsm-box id="vsmBox"></vsm-box>
     </div>
+
+    <textarea id="wsTA2" class="stateText wsTA"></textarea>
 
     <div id="msg" class="msg"></div>
 

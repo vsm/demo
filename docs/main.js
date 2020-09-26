@@ -59,7 +59,7 @@
 
   if (svgInspect)  {
     document.getElementById('svg').classList.remove('hide');
-    elMsg.className += ' smallsep';
+    document.getElementById('wsTA2').className += ' smallsep';
     var elSVGFig = document.getElementById('svgFig');
     var elSVGTxt = document.getElementById('svgText');
     var elSVGHtm = document.getElementById('svgHtml');
@@ -252,13 +252,14 @@
 
   elTxt.cols  = elTxt2.cols  = elTxtMaxCols;
   elTxt.value = elTxt2.value = '';
-  enableTabShiftTab(elTxt);  // (Also makes Tab not move focus onto Clear button).
+  indentationAwareTA(elTxt);  // (Also makes Tab not move focus to Clear button).
 
 
 
   // --- Initialize the 'msg' elements (above the textareas) ---
 
   function setElMsgWidth() {
+    wsTA1.style.width = wsTA2.style.width =
     elMsg.style.width = elMsg2.style.width = getComputedStyle(elTxt).width;
   }
 
@@ -273,6 +274,7 @@
   }
 
   window.addEventListener('resize', setElMsgWidth);
+  elTxt .addEventListener('mouseup', setElMsgWidth);
   setElMsgWidth();
   setMsg('');
 
@@ -505,63 +507,89 @@
 
 
 
-  // --- Utility: Tab in textareas ---
+  // --- Utility: more code-indentation aware editing in textareas ---
 
   /**
-   * Adds Tab-functionality to the `el` textarea DOM-element. This makes Tab not
-   * move the browser focus away from it, and makes it a common code-editing key:
-   * - Tab indents, Shift-Tab unindents.
-   * - This work both in-line, and on a selection of lines.
+   * Enhances certain keypresses in the `el` textarea DOM-element, to make them
+   * more code-indentation aware. (This also makes Tab not divert focus).
+   * The indentation used is: two spaces.
+   * - Tab: indents, both in-line, and on a selection of lines.
+   * - Shift-Tab: unindents, both in-line and on a selection.
+   * - Home: moves the cursor to the first non-whitespace character on the line,
+   *   or if it is already there, or no ws-chars, then to the start of the line.
+   * - Shift+Home: does the same, but only for the selectionEnd.
+   * - Enter: also adds to the new line the same indentation as the current one.
    */
-  function enableTabShiftTab(el) {
+  function indentationAwareTA(el) {
     el.addEventListener('keydown', function(e) {
-      if (e.key !== 'Tab')  return;
+      if (!['Tab', 'Home', 'Enter'] .includes(e.key) || e.ctrlKey || e.altKey)
+        return;
       e.preventDefault();
+
+      var V = this.value;
       var X = this.selectionStart;
       var Y = this.selectionEnd;
-      var A = this.value.slice(0, X);  // Part before selection.
-      var B = this.value.slice(X, Y);  // Selected part, if any.
-      var C = this.value.slice(Y);     // Part after selection.
-      if (X == Y) {  // No selection. Handle simple Tab and Shift+Tab.
-        if      (!e.shiftKey)      { B = '  ';            X = (Y += 2); }
-        else if (A.endsWith('  ')) { A = A.slice(0, -2);  X = (Y -= 2); }
-      }
-      else {
-        // Move anything before cursor on first selection line, into selection.
-        var regexPre = /(^|\n)(  [^\n]*)$/;
-        var pre = A.split('\n').pop().replace(regexPre, '$2');
-        if (pre.length) {
-          A = A.slice(0, -pre.length);
-          B = pre + B;
-          X -= pre.length;
+      var A = V.slice(0, X);  // Part before selection or cursor.
+      var B = V.slice(X, Y);  // Selected part, if any.
+      var C = V.slice(Y);     // Part after selection or cursor.
+
+      // Functions to get the part of the line before/after a start/end-cursor.
+      const _pre  = p => V.slice(    V    .lastIndexOf('\n', p - 1) + 1, p);
+      const _post = p => V.slice(p, (V + '\n').indexOf('\n', p    )       );
+      var pre  = '';
+      var post = '';
+
+      if (e.key == 'Tab') {
+        if (X == Y) {  // No selection. Handle simple Tab and Shift+Tab.
+          if      (!e.shiftKey)        A += '  ';
+          else if (A.endsWith('  '))   A = A.slice(0, -2);
+          else if (A.endsWith(' ') ) { A = A.slice(0, -1);  if (C[0] == ' ')  C = C.slice(1); }
+          else if (C[0] == ' '     )   C = C.slice(C[1] == ' ' ? 2 : 1);
         }
-        // Move anything after cursor on last selection line, into selection.
-        var post = B.endsWith('\n') ?  '' :  C.split('\n')[0];
-        if (post.length) {
-          B += post;
+        else {
+          pre  = _pre(X);
+          post = V[Y - 1] == '\n' ?  '' :  _post(Y); ///console.log(pre+'✓'+post);
+          // Include anything before selectionStart on first line,
+          // or after selectionEnd on last line, into selection.
+          A = A.slice(0, A.length - pre.length);
           C = C.slice(post.length);
-          Y += post.length;
-        }
-        if (!e.shiftKey) {              // Tab on selection.
-          B = B.split('\n').map(s => '  ' + s);
-          Y += B.length * 2;
-          D = B.pop();
-          if (D == '  ') { B.push('');  Y -= 2; }
-          else           { B.push(D );          }
+          console.log(A+'#'+(pre + B + post)+'#'+C);
+          B = (pre + B + post).split('\n');
+          if (!e.shiftKey) {              // Tab on selection.
+            B = B.map(s => '  ' + s);
+            var D = B.pop();
+            B.push(D == '  ' ?  '' :  D);
+          }
+          else {                          // Shift+Tab on selection.
+            B = B.map(s => s.slice(s[0] != ' ' ?  0 :  s[1] != ' ' ?  1 :  2));
+          }
           B = B.join('\n');
         }
-        else {                          // Shift+Tab on selection.
-          B = B.split('\n').map(s => {
-            if (s.startsWith('  '))  { s = s.slice(2);  Y -= 2; }
-            return s;
-          }).join('\n');
-          if (regexPre.test(A))  {
-            A = A.replace(regexPre, '$1$2');
-            X -= 2;  Y -= 2;
-          }
+        this.value = A + B + C;
+        this.selectionStart = A.length;
+        this.selectionEnd   = A.length + B.length;
+        stateTextToBoxValue();
+      }
+
+      else if (e.key == 'Home') {
+        pre = _pre(Y);
+        var line = pre + _post(Y);
+        var pos  = line.search(/\S|$/);
+        pos = Y - pre.length + (pos == pre.length || pos == line.length ?  0 :  pos);
+        if (!e.shiftKey)  this.selectionStart = this.selectionEnd = pos;
+        else if (X != Y)  this.selectionEnd = pos;
+        else {  // Start selection.
+          this.selectionStart = Math.min(Y, pos);
+          this.selectionEnd   = Math.max(Y, pos);
         }
       }
-      this.value = A + B + C;  this.selectionStart = X;  this.selectionEnd = Y;
+
+      else if (e.key == 'Enter') {
+        A = A + '\n' + ' '.repeat(_pre(X).search(/\S|$/));
+        this.value = A + C;
+        this.selectionStart = this.selectionEnd = A.length;
+      }
+
       stateTextToBoxValue();
     });
   }

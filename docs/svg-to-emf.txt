@@ -1,4 +1,4 @@
-How to convert SVG to EMF  (and avoid loss of precision or font data):
+How to convert SVG to EMF  (and avoid losing precision or font data):
 
   + Note: You should have the font Tahoma installed (to properly see the SVG in the first place).
     On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma .
