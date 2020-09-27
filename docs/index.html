@@ -153,8 +153,8 @@ body .hide { display: none; }
 
 /* ----- The vertical-space resizers above and below the vsm-box.. ----- */
 
-.wsTA { border: 0;  color: #fff;  border-color: #fff;  resize: vertical;
-  cursor: default;  padding: 0;  margin: 0;  line-height: 0px;  height: 10px; }
+.wsTA { border-color: #fff;  color: #fff;  resize: vertical;  cursor: default;
+  line-height: 0px;  height: 10px; }
 #wsTA1 { height: 23px; }
 #wsTA2 { height: 10px; }
 #wsTA2.largesep { height: 90px; }
@@ -336,13 +336,13 @@ body .hide { display: none; }
       </div>
     </div>
 
-    <textarea id="wsTA1" class="stateText wsTA"></textarea>
+    <textarea id="wsTA1" class="stateText wsTA" cols="120"></textarea>
 
     <div class="vsm-box-wrap loading">
       <vsm-box id="vsmBox"></vsm-box>
     </div>
 
-    <textarea id="wsTA2" class="stateText wsTA"></textarea>
+    <textarea id="wsTA2" class="stateText wsTA" cols="120"></textarea>
 
     <div id="msg" class="msg"></div>
 
