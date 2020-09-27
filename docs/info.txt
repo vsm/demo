@@ -1,8 +1,12 @@
 More info:
 
-• This demo also enables you to paste VSM-JSON data and see the corresponding VSM-sentence.
+== JSON ==
+• This demo also enables you to paste VSM-JSON in the large textfield,
+  and see the corresponding VSM-sentence in the vsm-box above it.
 
-• You can export this VSM-sentence to for example an SVG image:
+
+== SVG ==
+• You can export a VSM-sentence to for example an SVG image:
   a sharp, lightweight vector format.
 
 • If you set a `delay ..` for like 3 seconds, and then click the `Download SVG` button,
@@ -19,7 +23,21 @@ More info:
   click the `EMF tips` link.
 
 
-• If you give a live demo or presentation of VSM, you can let the audience focus on the vsm-box
-  alone by moving the top information panel (and/or bottom JSON textarea) out of sight.
-  You can do this with the vertical-space resize-handles, located to the right, just above the
-  JSON textarea's right border.
+== SVG, bonus ==
+• The SVG includes some hidden elements that you can show when needed, using SVG-editor software.
+  These elements are just white or have 0% opacity.
+  - A text cursor:  in the first empty VSM-term.
+  - A mouse cursor and click-indicating stripes:  over the last leg of a connector highlighter.
+  - The background square of a connector-remove-icon (as seen when mouse-hovered in a vsm-box).
+  ► To make these visible, e.g. in Illustrator do:
+    Window --> Appearance --> open each of Stroke|Fill's sublist --> Opacity --> Opacity: 100%.
+• To make the input-field at the end of a vsm-box visible in the SVG: put some text in it; and
+  use a space if it should be shown as empty.
+• If you generate an SVG that includes a vsm-box border, and the vsm-box has grown too wide:
+  hit Ctrl+Del in the input-field behind the last term so that it will narrow.
+
+
+== For demos ==
+• If you give a live demo or presentation, you can make the audience focus on just the vsm-box
+  by moving the top information panel (and/or bottom JSON textarea) out of sight: use the
+  whitespace-resizing handles, just above and below the right side of the JSON textfield.

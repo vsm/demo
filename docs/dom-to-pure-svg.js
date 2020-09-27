@@ -4,8 +4,8 @@
  * code, which can not be read by SVG editors.
  *
  * Developer's notes:
- * - This does not convert directly from JSON or from a VSM-sentence JS-object;
- *   a VSM-box DOM-element is still needed, as does all the complex layout.
+ * - This does not convert VSM-JSON or a VSM-sentence JS-object directly; it
+ *   still needs a VSM-box DOM-element, which does much of the complex layout.
  * - Many default values (vsm-box CSS or `sizes`) are used in the SVG,
  *   so some VSM-box customizations are not necessarily reflected.
  * - This code could be moved into a standalone module. Perhaps even linked to
@@ -38,7 +38,8 @@ function domToPureSVG(e, opt) {
     addUCConn:      true,       // False=>removes any shown under-constr-conn.
     addPosHL:       true,
     showRemoveIcon: true,       // False=>still added, but kept invisible.
-    showCursor:     false,      // False=>still added, but kept invisible.
+    showTextCursor: false,      // False=>still added, but kept invisible.
+    showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
     borderW:        1,
     termsH:         17,  // (Excludes the fake white padding on top, =part of conns panel).
     termsMarginTop: 2,
@@ -132,11 +133,15 @@ function domToPureSVG(e, opt) {
       ${ o.addEndTerm ?
        '.r.inst.end      { stroke: #' + o.endTermStroke + ';  }' : '' }
         .r.focal { stroke: #aaaaaa;  stroke-dasharray: 0,3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
-        .cursor  { stroke: #${ o.showCursor ?  '000000' :  o.termsFill };  stroke-width: 1px; }
+        .cursor  { stroke: #${ o.showTextCursor ?  '000000' :  o.termsFill };  stroke-width: 1px; }
         .t       { font: 11px tahoma, sans-serif;  white-space: pre; }
         .t.inst, .t.ref { fill: #1c2a47; }
         .t.edit, .t.end { fill: #7a7a7a; }  .t.plac { fill: #aaaaaa; }
         .t.class        { fill: #2a2a05; }  .t.lit  { fill: #200505; }
+        .mouse { stroke: #000000;  fill: #ffffff;  stroke-width: 0.5px; ${
+                 o.showMouse      ?  '' :  ' opacity: 0; ' } }
+        .click { stroke: #000000;  fill: none;     stroke-width: 0.8px; ${
+                 o.showMouse == 2 ?  '' :  ' opacity: 0; ' } }
       `.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '))
       /*
       @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
@@ -174,7 +179,8 @@ function domToPureSVG(e, opt) {
         f.hl         (e, { ...o,  s: `.conn-highlight:not([class*="fade-leave"])` }),
         f.conns      (e, { ...o,  s: `.conns` }),
         f.removeIcon (e, { ...o,  s: `.conn-remove-icon:not([class*="fade-leave"])` }),
-        f.terms      (e, { ...o,  s: `.terms` })
+        f.terms      (e, { ...o,  s: `.terms` }),
+        f.mouse      (e, { ...o })
       ];
     },
     backgrounds: (e, o) => {
@@ -330,12 +336,12 @@ function domToPureSVG(e, opt) {
         a.push(`<line class="r focal" x1="${x1}" x2="${x2}" y1="2" y2="2"/>`);
       }
       if (e.querySelector('input')) {
-        a.push(  f.cursor(e,  { ...o,  xc: x + 4 })  );
+        a.push(  f.textCursor(e,  { ...o,  xc: x + 4 })  );
       }
       return a;
     },
 
-    cursor: (e, o) =>
+    textCursor: (e, o) =>
       `<line class="cursor" x1="${o.xc}" x2="${o.xc}" y1="1.5" y2="12.5"/>`
     ,
 
@@ -411,6 +417,32 @@ function domToPureSVG(e, opt) {
         .replace(/>([^<]*)<tspan /g, `\n${ o.tab }><tspan `);
 
       function round1(num)  { return Math.round(num * 10) / 10; }
+    },
+
+
+    mouse: (e, o) => {
+      // Add mouse + click-stripes, if a pos- or conn-highlight is shown.
+      // Position it relative to pos- or conn-hl's top-right corner.
+      var hl =
+        (o.addUCConn && o.addPosHL ?  e.querySelector('.pos-highlight') :  0) ||
+        e.querySelector('.conn-remove-icon .ri-bg');
+      if (!hl)  return '';
+
+      var x2 = +hl.getAttribute('x') + +hl.getAttribute('width');
+      var y1 = +hl.getAttribute('y');
+      return [
+        `<g transform="translate(${ x2 - 19 } ${ y1 + 4 })">`,
+        `  <polygon class="mouse" points="7.15,7.2 7.15,22.45 10.5,19.1 ` +
+          `12.65,24.3 15.1,23.05 12.95,18.2 17.85,17.85"/>`,
+        `  <g>`,
+        `    <line class="click" x1="4" y1="5" x2="1.55" y2="2.8"/>`,
+        `    <line class="click" x1="3.15" y1="8.35" x2="0" y2="9.3"/>`,
+        `    <line class="click" x1="10.3" y1="5" x2="12.75" y2="2.8"/>`,
+        `    <line class="click" x1="11.15" y1="8.35" x2="14.3" y2="9.3"/>`,
+        `    <line class="click" x1="7.15" y1="3.3" x2="7.15" y2="0"/>`,
+        `  </g>`,
+        `</g>`
+      ]
     }
   };
 

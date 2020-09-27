@@ -21,14 +21,13 @@
                          // in a `vsmExamples[..]`, (i.e. with narrow endTerm):
                          // this must be set to `true` at start!
   var imgScale = 8;
-  var dlDelay = 0;
+  var dlDelay  = 0;
   var whiteBox      = false;
   var autoWhiteBox  = true;
   var keepSVGCursor = false;
   var json5         = true;
   var pureSVG       = true;
   var showRDF       = false;
-  var elTxtMaxCols  = 120;
 
   var autofocus     = true;
   var exampleNr_initial = svgInspect? -1 : 0;  // If 0, starts with empty VSM-box.
@@ -45,25 +44,34 @@
   }
 
 
-  var elVsmBox   = document.getElementById('vsmBox');
-  var elWhBTgl   = document.getElementById('toggleWhiteBox');
-  var elImgScale = document.getElementById('inputImgScale');
-  var elDlDelay  = document.getElementById('inputDlDelay');
-  var elSVGBtn   = document.getElementById('buttonGetSVG');
-  var elPNGBtn   = document.getElementById('buttonGetPNG');
-  var elMsg      = document.getElementById('msg');
-  var elMsg2     = document.getElementById('msg2');
-  var elTxt      = document.getElementById('stateText');
-  var elTxt2     = document.getElementById('rdfText');
-  var elRDF      = document.getElementById('rdf');
+  var $el = document.getElementById .bind(document);
+  var elVsmBox   = $el('vsmBox');
+  var elWhBTgl   = $el('toggleWhiteBox');
+  var elImgScale = $el('inputImgScale');
+  var elDlDelay  = $el('inputDlDelay');
+  var elSVGBtn   = $el('buttonGetSVG');
+  var elPNGBtn   = $el('buttonGetPNG');
+  var elRsz1     = $el('wsResizer1');
+  var elRsz2     = $el('wsResizer2');
+  var elRsz3     = $el('wsResizer3');
+  var elRsz4     = $el('wsResizer4');
+  var elMsg      = $el('msg');
+  var elMsg2     = $el('msg2');
+  var elTxt      = $el('stateText');
+  var elTxt2     = $el('rdfText');
+  var elRDF      = $el('rdf');
 
   if (svgInspect)  {
-    document.getElementById('svg').classList.remove('hide');
-    document.getElementById('wsTA2').className += ' smallsep';
-    var elSVGFig = document.getElementById('svgFig');
-    var elSVGTxt = document.getElementById('svgText');
-    var elSVGHtm = document.getElementById('svgHtml');
+    $el('svg').classList.remove('hide');
+    elRsz2.classList.add('smallSep');
+    var elSVGFig = $el('svgFig');
+    var elSVGTxt = $el('svgText');
+    var elSVGHtm = $el('svgHtml');
   }
+
+
+  var elTxtMaxCols   = elTxt.getAttribute('data-cols');
+  var elTxtCharWidth = 6;
 
   var vsmExamples = vsmExamplesList({ addTheTestExample });
 
@@ -150,7 +158,7 @@
 
 
   // Init checkbox for removing connectors' feet.
-  var el = document.getElementById('toggleNoFeet');
+  var el = $el('toggleNoFeet');
   el.checked = !vsmBoxSizes.connFootVisible;
   el.addEventListener('change', function() {
     updateVsmBoxSizes({ connFootVisible: !vsmBoxSizes.connFootVisible });
@@ -159,7 +167,7 @@
 
 
   // Init checkbox for removing/adding the Create-Term item the autocomplete list.
-  el = document.getElementById('toggleCreateItem');
+  el = $el('toggleCreateItem');
   elVsmBox.allowClassNull = allowClassNull_initial.toString();
   el.checked = allowClassNull_initial;
   el.addEventListener('change', function(ev) {
@@ -168,7 +176,7 @@
 
 
   // Init checkbox for activating some tweaks to the dictionaries, for VSM-paper figs.
-  el = document.getElementById('toggleUseTweaks');
+  el = $el('toggleUseTweaks');
   el.checked = useTweaks;
   el.addEventListener('change', function() {
     useTweaks = !useTweaks;
@@ -191,7 +199,7 @@
 
 
   // Init checkbox for toggling JSON/JSON5 output in the stateText.
-  el = document.getElementById('toggleJSON5');
+  el = $el('toggleJSON5');
   el.checked = json5;
   el.addEventListener('change', function() {
     json5 = !json5;
@@ -200,13 +208,13 @@
 
 
   // Init checkbox for keeping/removing a visible cursor in export of vsm-box to SVG.
-  el = document.getElementById('toggleKeepSVGCursor');  // (Used for (earlier) vsmBox-to-SVG code).
+  el = $el('toggleKeepSVGCursor');  // (Used for (earlier) vsmBox-to-SVG code).
   el.checked = keepSVGCursor;
   el.addEventListener('change', function() { keepSVGCursor = !keepSVGCursor; });
 
 
   // Init checkbox for toggling pure-SVG output vs. SVG with a 'foreignObject' node.
-  el = document.getElementById('togglePureSVG');
+  el = $el('togglePureSVG');
   el.checked = pureSVG;
   updateSvgBtn();
   el.addEventListener('change', function() {
@@ -219,7 +227,7 @@
 
 
   // Init checkbox for showing the RDF-conversion textarea.
-  el = document.getElementById('toggleRDF');
+  el = $el('toggleRDF');
   el.checked = showRDF;
   elRDF.classList[!showRDF ? 'add' : 'remove']('hide');
   el.addEventListener('change', function() {
@@ -242,16 +250,19 @@
 
 
   // Init checkbox for automatically switching to whiteBox mode before saving to SVG.
-  el = document.getElementById('toggleAutoWhiteBox');
+  el = $el('toggleAutoWhiteBox');
   el.checked = autoWhiteBox;
   el.addEventListener('change', function() { autoWhiteBox = !autoWhiteBox; });
 
 
 
-  // --- Initialize the 'stateText' (JSON) and 'rdfText' textareas ---
+  // --- Initialize the 'stateText' (JSON) 'rdfText', and 'resizer' textareas ---
 
-  elTxt.cols  = elTxt2.cols  = elTxtMaxCols;
+  elTxt.cols  = elTxt2.cols
+    = elRsz1.cols = elRsz2.cols = elRsz3.cols = elRsz4.cols = elTxtMaxCols;
   elTxt.value = elTxt2.value = '';
+  elTxt .rows = elTxt .getAttribute('data-min-rows');
+  elTxt2.rows = elTxt2.getAttribute('data-min-rows');
   indentationAwareTA(elTxt);  // (Also makes Tab not move focus to Clear button).
 
 
@@ -259,10 +270,26 @@
   // --- Initialize the 'msg' elements (above the textareas) ---
 
   function setElMsgWidth(basedOnEl = elTxt) {
-    wsTA1.style.width = wsTA2 .style.width =
-    elTxt.style.width = elTxt2.style.width =
-    elMsg.style.width = elMsg2.style.width = getComputedStyle(basedOnEl).width;
+    var w = getComputedStyle(basedOnEl).width;
+    [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4, elMsg, elMsg2]
+      .forEach(e => e.style.width = w );
+
+    // Update 'maxCols' for VsmJsonPretty, and then update elTxt's content.
+    elTxtMaxCols = Math.max(10, ~~(~~w.replace('px', '') / elTxtCharWidth) );
+    try {
+      updateElTxtValue(JSON5.parse(elTxt.value));
+      fitAllTextAreas()
+    }
+    catch (err) {}
   }
+
+  window.addEventListener('resize', () => setElMsgWidth(elTxt));
+  [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4] .forEach(e => {
+    e.addEventListener('mouseup' , () => setElMsgWidth(e));
+    e.addEventListener('touchend', () => setElMsgWidth(e));
+  });
+  setElMsgWidth(elTxt);
+
 
   function setMsg(msg) {  // `msg`: 1 / -1 / fill-example name / error msg.
     var d = new Date();
@@ -274,23 +301,17 @@
       ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
   }
 
-  window.addEventListener('resize'  , () => setElMsgWidth(elTxt ));
-  elTxt .addEventListener('mouseup' , () => setElMsgWidth(elTxt ));
-  elTxt .addEventListener('touchend', () => setElMsgWidth(elTxt ));
-  elTxt2.addEventListener('mouseup' , () => setElMsgWidth(elTxt2));
-  elTxt2.addEventListener('touchend', () => setElMsgWidth(elTxt2));
-  setElMsgWidth(elTxt);
   setMsg('');
 
 
 
   // --- Add a button for each available example. ---
 
-  var exampleButtonC = document.getElementById('exampleButtonC');
-  var exampleButtons = document.getElementById('exampleButtons');
+  var exampleButtonC = $el('exampleButtonC');
+  var exampleButtons = $el('exampleButtons');
   for (var i = 0, newB = 0;  i < vsmExamples.length;  i++) {
     // Note: some buttons are added in HTML already (just to show smth @pageload).
-    var button = document.getElementById('exampleButton' + i);
+    var button = $el('exampleButton' + i);
     if (!button) {
       button = document.createElement('button');
       button.id = 'exampleButton' + i;
@@ -306,7 +327,7 @@
     }
   }
   // Also remove any buttons that were added too many in HTML.
-  while (el = document.getElementById('exampleButton' + i++))  el.remove();
+  while (el = $el('exampleButton' + i++))  el.remove();
 
 
   // Fills an example in the VsmBox + the textarea, and shows a msg.
@@ -359,13 +380,17 @@
 
   function boxValueToStateText(value) {         // (See vsm-box's index-dev.js).
     currentVSM = value;
-    elTxt.value = lastAutoFilledText =
-      VsmJsonPretty(value, { json5: json5, maxLength: elTxtMaxCols });
+    updateElTxtValue(value);
     setMsg(1);
     updateRdf(value);
     setPureSVGText({ afterVsmBoxChange: true });
     fitAllTextAreas();
   }
+
+  function updateElTxtValue(value) {
+    elTxt.value = lastAutoFilledText =
+      VsmJsonPretty(value, { json5: json5, maxLength: elTxtMaxCols });
+    }
 
   function stateTextToBoxValue() {              // (See vsm-box's index-dev.js).
     var abort = lastAutoFilledText === elTxt.value;
@@ -431,9 +456,9 @@
   }
 
   elSVGBtn.onclick = function() {
-    makeVsmBoxNarrower(elVsmBox, {}, () => {
-      prepAndDL({ format: 'svg', delay: dlDelay * 1e3, keepSVGCursor, pureSVG });
-    });
+    // Note: Don't narrow first for SVG, as it could delete input in empty terms.
+    // Also, if outputting a 'whiteBox' to SVG, then narrow makes no difference.
+    prepAndDL({ format: 'svg', delay: dlDelay * 1e3, keepSVGCursor, pureSVG });
   }
 
   function prepAndDL(options) {
@@ -482,9 +507,9 @@
     opt = { focusAfter: false,  ...opt };
 
     const find    = sel => elVsmBox.querySelector('#vsmBox ' + sel);
-    const click   = e  => e.dispatchEvent(new MouseEvent   ('mousedown', {
+    const click   = e => e.dispatchEvent(new MouseEvent   ('mousedown', {
       bubbles: true }));
-    const ctrlDel = e  => e.dispatchEvent(new KeyboardEvent('keydown'  , {
+    const ctrlDel = e => e.dispatchEvent(new KeyboardEvent('keydown'  , {
       bubbles: true,  keyCode: 46,  key: 'Delete',  ctrlKey: true }));
 
     setTimeout(() => {                  // (For if vsm-box was just being added).
@@ -523,6 +548,7 @@
    *   or if it is already there, or no ws-chars, then to the start of the line.
    * - Shift+Home: does the same, but only for the selectionEnd.
    * - Enter: also adds to the new line the same indentation as the current one.
+   * + Note!: the Tab and Enter operations delete the text-area's undo-history.
    */
   function indentationAwareTA(el) {
     el.addEventListener('keydown', function(e) {
@@ -592,9 +618,8 @@
         A = A + '\n' + ' '.repeat(_pre(X).search(/\S|$/));
         this.value = A + C;
         this.selectionStart = this.selectionEnd = A.length;
+        stateTextToBoxValue();
       }
-
-      stateTextToBoxValue();
     });
   }
 

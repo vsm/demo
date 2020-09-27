@@ -89,11 +89,13 @@ button:active { background: #c6c6c6;  transform: scale(0.99) translate(0.3px, 0)
 
 body .hide { display: none; }
 
-.main { padding: 5px 0 300px 60px;  background: #fff;  margin-top: 4px; }
+.main { margin: 4px 0 50px 60px;  background: #fff; }
 
-.headBox { font-size: 12px;  display: inline-block;  line-height: 17.5px;
-  margin: 0 0 0 -4px;  border-radius: 1px;  background: #f8f8f8;
-  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16);  max-width:  800px; }
+.headBox { font-size: 12px;  line-height: 17.5px;  max-width: 800px;
+  margin: 5px 0 0 -4px;  border-radius: 1px;  background: #f8f8f8;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16); }
+.headBoxWrap { resize: vertical;  overflow: hidden; display: inline-block;
+  margin: -3px -3px -3px -7px;  padding: 3px 3px 3px 7px;  min-height: 28px; }
 
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
@@ -132,12 +134,11 @@ body .hide { display: none; }
 #buttonGetSVG.pureSVG .plusHTML  { display: none; }
 #buttonGetPNG { padding: 0 6px; }
 .figControls .number { width: 15px;  margin: 0 0 0 4px;  padding: 2px 2px 1px;
-  border: 0.75px solid #b7b7b7;  font-size: 12.5px;  color: #333; }
+  border: 0.75px solid #b7b7b7;  font-size: 12.5px;  color: #424242; }
 .controlRow .info, .controlRow .info a { font-size: 10.5px;  line-height: 12px; }
 
 .msg { color: #aaa;  font-size: 11px;  height: 12px;  text-align: right;
   margin: 0 0 2px 0; }
-#msg2 { margin-top: 14px; }
 
 #svg { margin: 0 0 28px; }
 #svg > div { display: block;  margin: 0 0 8px;  border-color: #000; }
@@ -151,14 +152,21 @@ body .hide { display: none; }
 #rdfText { background: #fdfdfd; }
 
 
-/* ----- The vertical-space resizers above and below the vsm-box.. ----- */
+/* ----- The whitespace resizers. ----- */
 
-.wsTA { border-color: #fff;  color: #fff;  resize: vertical;  cursor: default;
-  line-height: 0px;  height: 10px; }
-#wsTA1 { height: 23px; }
-#wsTA2 { height: 10px; }
-#wsTA2.largesep { height: 90px; }
-#wsTA2.smallsep { height: 6px; }
+.wsResizer { border-color: #fff;  color: #fff;  resize: both;
+  cursor: default;  line-height: 0px;  height: 10px; }
+#wsResizer1 { height: 23px; }
+#wsResizer2 { height: 10px; }
+#wsResizer2.smallSep { height: 6px; }
+#wsResizer2.largeSep { height: 90px; }
+#wsResizer3 { height: 14px; }
+#wsResizer4 { height: 14px; }
+.wsResizerWrap { position: relative;  display: inline-block; }
+.wsResizerWrap:after { content: "";  position: absolute; /* Lighten resize-handles. */
+  pointer-events: none;  right: 0;  bottom: 0;  width: 15px;  height: 15px;
+  transition: all 0.3s;  background: rgba(255, 255, 255, 0.8); }
+.wsResizerWrap:hover:after { background: rgba(255, 255, 255, 0.2); }
 
 
 /* ----- For elements that are added by JS-code: gracefully add them,
@@ -168,15 +176,15 @@ body .hide { display: none; }
 @keyframes example-buttons-fadein {  /* Used in the JS-code. */
   from { opacity: 0; }  to { opacity: 1; } }
 
-.vsm-box-wrap.loading .vsm-box { visibility: hidden;  }
-.vsm-box-wrap.loading { width: 200px;  height:  79px;
+.vsmBoxWrap.loading .vsm-box { visibility: hidden;  }
+.vsmBoxWrap.loading { width: 200px;  height:  79px;
   display: block;  background: #fbfbfb;
   box-sizing: content-box;
   border: 1px solid #d3d9e5;
-  animation: vsm-box-wrap-loading 1.5s linear 0.3s infinite;
+  animation: vsmBoxWrap-loading 1.5s linear 0.3s infinite;
   position: relative;
 }
-.vsm-box-wrap.loading:before {
+.vsmBoxWrap.loading:before {
   content: " ";
   position: absolute;
   bottom: 0;
@@ -184,13 +192,13 @@ body .hide { display: none; }
   width: 100%;
   background: #fff;
   background: linear-gradient(to right, #fff 0%, #f7f7f7 15%, #fff 30%);
-  animation: vsm-box-wrap-loading-before 1.5s linear 0.3s infinite;
+  animation: vsmBoxWrap-loading-before 1.5s linear 0.3s infinite;
   filter: brightness(1.03);
 }
-@keyframes vsm-box-wrap-loading {
+@keyframes vsmBoxWrap-loading {
   50%, 75% { box-shadow: 1px 0 0 1px rgba(211, 217, 229, 0.5); }
 }
-@keyframes vsm-box-wrap-loading-before {
+@keyframes vsmBoxWrap-loading-before {
   to { background-position: 200px 0; }
   25%, 75% { filter: brightness(1); }
 }
@@ -260,7 +268,7 @@ body .hide { display: none; }
 
 <body>
   <div class="main">
-    <div class="headBox">
+    <div class="headBoxWrap"><div class="headBox">
       <div class="headSec intro">
         • Below is a <b class="emph">VSM-box</b>,
         and its <b class="emph">content as JSON</b> underneath.
@@ -334,15 +342,20 @@ body .hide { display: none; }
             >tips</a>.</span>
         </div>
       </div>
-    </div>
+    </div></div>
 
-    <textarea id="wsTA1" class="stateText wsTA" cols="120"></textarea>
+    <div><div class="wsResizerWrap">
+      <textarea id="wsResizer1" class="stateText wsResizer" readonly></textarea>
+    </div></div>
 
-    <div class="vsm-box-wrap loading">
+    <div class="vsmBoxWrap loading">
       <vsm-box id="vsmBox"></vsm-box>
     </div>
 
-    <textarea id="wsTA2" class="stateText wsTA" cols="120"></textarea>
+    <div><div class="wsResizerWrap">
+      <textarea id="wsResizer2" class="stateText wsResizer" readonly></textarea>
+    </div></div>
+
 
     <div id="msg" class="msg"></div>
 
@@ -353,14 +366,26 @@ body .hide { display: none; }
       ><div id="svgHtml" class="stateText loading"></div
       ></div>
 
-    <textarea id="stateText" class="stateText loading" data-min-rows="18"
-      rows="18" cols="120" spellcheck="false"></textarea>
+    <textarea id="stateText" class="stateText loading"
+      spellcheck="false" data-min-rows="15" data-cols="120"></textarea>
+
 
     <div id="rdf" class="hide">
+
+      <div><div class="wsResizerWrap">
+        <textarea id="wsResizer3" class="stateText wsResizer" readonly></textarea>
+      </div></div>
+
       <div id="msg2" class="msg">--&gt; vsm-to-rdf</div>
-      <textarea id=  "rdfText" class="stateText loading" data-min-rows="1"
-        rows="1" cols="120" spellcheck="false" readonly></textarea>
+
+      <textarea id="rdfText" class="stateText loading"
+        spellcheck="false" data-min-rows="1" readonly></textarea>
     </div>
+
+
+    <div><div class="wsResizerWrap">
+      <textarea id="wsResizer4" class="stateText wsResizer" readonly></textarea>
+    </div></div>
   </div>
 
   <!-- Here it may be easiest to override vsm-box/-autocomplete's default CSS. -->
@@ -375,10 +400,11 @@ body .hide { display: none; }
     (function() {
 
       const HowManyExamplesToExpect = 16;
+      const $el = document.getElementById .bind(document);
 
       // Add some Example buttons alreay, before the main code does so. This
       // prevents a hidden+shown flash.  Main code adds/removes these as needed.
-      var exampleButtons = document.getElementById('exampleButtons');
+      var exampleButtons = $el('exampleButtons');
       for (var i = 2;  i <= HowManyExamplesToExpect;  i++) {
         button = document.createElement('button');
         button.id = 'exampleButton' + i;
@@ -396,9 +422,23 @@ body .hide { display: none; }
         () => document.getElementsByTagName('head')[0].appendChild(css),  10
       );
 
-      // Prevent possoble flash of long text+scrollbars on page-reload.
-      document.getElementById('stateText').value = '';
-      document.getElementById('rdfText').value = '';
+      // Prevent possible flash of long text+scrollbars on page-reload.
+      $el('stateText').value = '';
+      $el('rdfText'  ).value = '';
+
+      // Immediately size the textareas correctly.
+      $el(    'stateText' ).cols
+        = $el('rdfText'   ).cols
+        = $el('wsResizer1').cols
+        = $el('wsResizer2').cols
+        = $el('stateText'   ).getAttribute('data-cols');
+      $el('stateText').rows = $el('stateText').getAttribute('data-min-rows');
+      $el(  'rdfText').rows = $el(  'rdfText').getAttribute('data-min-rows');
+
+      // Scroll to top of page (for Chrome, after refresh with collapsed headBox).
+      window.addEventListener('load', () => {
+        setTimeout(() =>  window.pageYOffset > 5  &&  window.scrollTo(0, 0),  0);
+      });
     })();
   </script>
 </body>
