@@ -274,9 +274,11 @@
       ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
   }
 
-  window.addEventListener('resize ', () => setElMsgWidth(elTxt ));
-  elTxt .addEventListener('mouseup', () => setElMsgWidth(elTxt ));
-  elTxt2.addEventListener('mouseup', () => setElMsgWidth(elTxt2));
+  window.addEventListener('resize'  , () => setElMsgWidth(elTxt ));
+  elTxt .addEventListener('mouseup' , () => setElMsgWidth(elTxt ));
+  elTxt .addEventListener('touchend', () => setElMsgWidth(elTxt ));
+  elTxt2.addEventListener('mouseup' , () => setElMsgWidth(elTxt2));
+  elTxt2.addEventListener('touchend', () => setElMsgWidth(elTxt2));
   setElMsgWidth(elTxt);
   setMsg('');
 
