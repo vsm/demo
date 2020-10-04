@@ -128,6 +128,12 @@
   };
 
 
+  elVsmBox.customPopup = function(o) {
+    if (useTweaks && o.z && o.z.tweakID)  o.strs.classID = '' + o.z.tweakID;
+    return o.strs;
+  };
+
+
   // --- Add external Copy+Paste support for the vsm-box. ---
 
   // Make a 'clipboard' for term and term-reference copying. Make functions for

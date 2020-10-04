@@ -26,15 +26,20 @@ More info:
 == SVG, bonus ==
 • The SVG includes some hidden elements that you can show when needed, using SVG-editor software.
   These elements are just white or have 0% opacity.
-  - A text cursor:  in the first empty VSM-term.
-  - A mouse cursor and click-indicating stripes:  over the last leg of a connector highlighter.
-  - The background square of a connector-remove-icon (as seen when mouse-hovered in a vsm-box).
-  ► To make these visible, e.g. in Illustrator do:
-    Window --> Appearance --> open each of Stroke|Fill's sublist --> Opacity --> Opacity: 100%.
-• To make the input-field at the end of a vsm-box visible in the SVG: put some text in it; and
-  use a space if it should be shown as empty.
-• If you generate an SVG that includes a vsm-box border, and the vsm-box has grown too wide:
-  hit Ctrl+Del in the input-field behind the last term so that it will narrow.
+  1. A text cursor:  in the empty VSM-term that has or last had the focus or text-cursor.
+  2. A mouse cursor and click-indicating stripes:  over the last leg of a connector highlighter.
+  3. A hover-highlighted version of a connector-highlighter's remove-icon.
+  ► To make these visible, it is easiest to:
+    Open the SVG in a text-editor, and find and replace:
+    1. `class="textcursor hide"` by `class="textcursor"` for the textcursor.
+    2. `class="mouse hide"`      by `class="mouse"`      for the mouse,
+       `class="click hide"`      by `class="click"`      for the click-stripes,
+    3. `class="ri-bg"`           by `class="ri-bg hl"`   and
+       `class="ri-fg"` (twice)   by `class="ri-fg hl"`   for the hovered remove-icon.
+• In order to generate an SVG that includes the input-field at the end of a vsm-box: first put
+  some text in this input (use a space if it should be shown as empty), and then generate the SVG.
+• If you generate an SVG that includes a vsm-box border, but the vsm-box has grown too wide:
+  first hit Ctrl+Del in the input-field behind the last term. This makes it narrow.
 
 
 == For demos ==

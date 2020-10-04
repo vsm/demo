@@ -14,13 +14,14 @@ function vsmExamplesList(opt) {
       conns: []
     },
 
-    // --- The elementary 'John eats chicken' example.
+    // --- The introductory 'John eats chicken' example.
     {
       terms: [
         { TIP1: '--- Mouse-hover some blue VSM-terms => the data herebelow pops up',
           TIP2: '--- Or drag them around and see this data change',
           str: 'John',    classID: 'https://orcid.org/0000-0002-1175-2668',
           instID: 'http://127.0.0.1/platform-database-instance-id-007',
+          dictID: 'https://orcid.org',
           descr: 'Dr. John Doe' },
         { str: 'eats',    classID: 'http://purl.obolibrary.org/obo/RO_0002470',
           instID: null,
@@ -238,7 +239,7 @@ function vsmExamplesList(opt) {
           classID: 'http://purl.obolibrary.org/obo/RO_0002411',
           instID: null,
           dictID: 'http://data.bioontology.org/ontologies/OBOREL',
-          descr: 'causally upstream of' },
+          descr: 'causally upstream of; a causation' },
         { str: 'NEDD4',
           classID: 'https://www.uniprot.org/uniprot/P46934',  /// 'UniProtKB:P46934'
           instID: null,
@@ -247,21 +248,21 @@ function vsmExamplesList(opt) {
         { str: 'to ubiquitinate',
           classID: 'http://purl.obolibrary.org/obo/RO_0002480',
           instID: null,
-          descr: 'ubiquitinates' },
+          descr: 'ubiquitinates; a ubiquitination' },
         { str: 'RNA Polymerase II',
           classID: 'http://purl.obolibrary.org/obo/NCIT_C95948',
           instID: 'db-id225' },
         { str: 'in',
           classID: 'http://purl.obolibrary.org/obo/RO_0001025',
           instID: null,
-          descr: 'has location' },
+          descr: 'has location; a \'being located in\'' },
         { str: 'nucleus',
           classID: 'http://purl.obolibrary.org/obo/NCIT_C13197',
           instID: null },
         { str: 'negatively regulating',
           classID: 'http://purl.obolibrary.org/obo/RO_0002212',
           instID: null,
-          descr: 'negatively regulates' },
+          descr: 'negatively regulates; a negative regulation' },
         { str: 'it',
           classID: 'http://purl.obolibrary.org/obo/NCIT_C95948',
           instID: 'db-id229',
@@ -271,7 +272,7 @@ function vsmExamplesList(opt) {
         { str: 'activates',
           classID: 'http://purl.obolibrary.org/obo/RO_0002406',
           instID: null,
-          descr: 'directly activates' },
+          descr: 'directly activates; a direct activation' },
         { str: 'transcription',
           classID: 'http://purl.obolibrary.org/obo/NCIT_C17208',
           instID: null,
@@ -376,9 +377,9 @@ function vsmExamplesList(opt) {
         { str: 'misfolded', classID: null, instID: null },
         { str: 'CFTR', classID: null, instID: null },
         { str: 'resulting in', classID: null, instID: null },
-        { str: 'proteasome', classID: null, instID: null },
-        { str: 'degrades', classID: null, instID: null },
-        { str: 'it', classID: null, instID: null, parentID: null }
+        { str: 'it', classID: null, instID: null, parentID: null },
+        { str: 'binds to', classID: null, instID: null },
+        { str: 'proteasome', classID: null, instID: null }
       ],
       conns: [
         { type: 'T', pos: [ 0, 1, 2 ] },
@@ -386,7 +387,7 @@ function vsmExamplesList(opt) {
         { type: 'T', pos: [ 0, 3, 5 ] },
         { type: 'T', pos: [ 7, 8, 9 ] },
         { type: 'T', pos: [ 3, 6, 8 ] },
-        { type: 'R', pos: [ 9, 5 ] }
+        { type: 'R', pos: [ 7, 5 ] }
       ]
     },
 

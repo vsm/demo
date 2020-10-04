@@ -100,6 +100,7 @@ body .hide { display: none; }
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
   padding-left: 15px;  padding-right: 15px; }
+.headSec.intro { padding-bottom: 7px;  position: relative; }
 
 .headSec button { font-size: 13px;  color: #222; }
 
@@ -116,13 +117,15 @@ body .hide { display: none; }
 
 .headSec.intro #vsmIs { border-left: 0px solid #777;  margin-left: 5px;
   color: #999; }
+.headSec.intro #vsmIs.ontop { position: absolute;  top: 5px; }
 
-.headSec.examples { padding-bottom: 0;  padding-top: 7px; }
+.headSec.examples { padding-top: 7px; }
 #exampleButtonsAll td { vertical-align: top; }
 .exampleButtons        { padding-left: 8px; }
 .exampleButtons button { margin: 0 0 6px 6px;  min-width: 30px; }
+.headSec.examples      { margin-bottom: -6px; }
 
-.headSec.controls { user-select: none; }
+.headSec.controls { user-select: none; border-top: 0; }
 .controlRow { font-size: 11.5px;  color: #555; }
 
 .controlRow.optionControls { margin: 0 0 5px -1px; }
@@ -141,8 +144,9 @@ body .hide { display: none; }
   margin: 0 0 2px 0; }
 
 #svg { margin: 0 0 28px; }
-#svg > div { display: block;  margin: 0 0 8px;  border-color: #000; }
+#svg > div { display: block;  margin: 0 0 8px;  border-color: #333; }
 #svgFig { user-select: none; }
+#svgHtml { background: #eee; }
 
 .stateText { font-size: 11px;  font-family: consolas, courier, monospace;
   color: #222;  white-space: pre;  display: block;  box-sizing: border-box;
@@ -255,6 +259,10 @@ body .hide { display: none; }
 /* .vsm-box .term span.label { text-overflow: clip; } */
 
 
+/* (For testing connector fade-out detection in `domToPureSVG()`.  */
+/* .vsm-box .conn-highlight.fade-leave-active { transition: opacity 3s; } */
+
+
 /* When setting a font: reach all elements under TheTerms, including <input>. * /
 .vsm-box .terms *,
 .vsm-box .term.inp input.input { font-family: verdana, tahoma, sans-serif; }
@@ -277,16 +285,16 @@ body .hide { display: none; }
         <b>edit</b> one and the other will update.
         &thinsp; So you can <b>copy-paste VSM-JSON</b>.
         <br>
-        • This demo uses only stub vsm-dictionaries,
-        &thinsp;but you can add new terms with 'Create' in autocomplete.
+        • The demo uses 'stub' vsm-dictionaries,
+        &thinsp;but you can add new terms with "Create" in autocomplete.
         <br>
         • Also here:
         &nbsp;VSM <b>examples</b>,
         &nbsp;<b>image</b> export,
         &nbsp;<b>RDF</b> conversion.
         &nbsp; &nbsp; | &nbsp; <span id="vsmIs">
-          (VSM = a <b>semantic model +</b> a <b>user interface</b>
-          that enables it).
+          (VSM = an intuitive <b>semantic model +</b> a <b>user interface</b>
+          to enable it).
         </span>
         <br>
         <div class="info">
@@ -337,8 +345,8 @@ body .hide { display: none; }
           &nbsp;delay<input   id="inputDlDelay"  class="number">s,
           &nbsp;<label><input id="toggleAutoWhiteBox" type="checkbox"
             >auto-white.</label>
-          <span class="info">For PNG use Chrome.
-          &nbsp; SVG➝EMF <a href="svg-to-emf.txt"
+          <span class="info">For PNG: use Chrome.
+          &nbsp; For SVG➝EMF: <a href="svg-to-emf.txt"
             >tips</a>.</span>
         </div>
       </div>
