@@ -366,6 +366,9 @@ function domToPureSVG(e, opt) {
             }
           });
           s = b.join('');
+
+          // Add newlines and indentation, without whitespace between tspans.
+          s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
         }
       }
 
@@ -383,8 +386,7 @@ function domToPureSVG(e, opt) {
       usedChars = [...usedChars, ...s.replace(/<.+?>/g,'').split('')];
       */
 
-      return s  // Add indentation+newlines, without whitespace between tspans.
-        .replace(/>([^<]*)<tspan /g, `\n${ o.tab }><tspan `);
+      return s;
     },
 
 
