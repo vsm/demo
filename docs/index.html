@@ -87,14 +87,14 @@ button:active { background: #c6c6c6;  transform: scale(0.99) translate(0.3px, 0)
 
 /* ----- Specific style definitions. ----- */
 
-body .hide { display: none; }
+body .hide, .hide { display: none; }
 
-.main { margin: 4px 0 50px 60px;  background: #fff; }
+#main { margin: 4px 0 50px 60px;  background: #fff; }
 
-.headBox { font-size: 12px;  line-height: 17.5px;  max-width: 800px;
+#headBox { font-size: 12px;  line-height: 17.5px;  max-width: 800px;
   margin: 5px 0 0 -4px;  border-radius: 1px;  background: #f8f8f8;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16); }
-.headBoxWrap { resize: vertical;  overflow: hidden; display: inline-block;
+#headBoxWrap { resize: vertical;  overflow: hidden; display: inline-block;
   margin: -3px -3px -3px -7px;  padding: 3px 3px 3px 7px;  min-height: 28px; }
 
 .headSec { padding: 5px 6px; }
@@ -115,8 +115,7 @@ body .hide { display: none; }
 .headSec.intro a:hover,
 .headSec .info a:hover { color: #6272e8; }
 
-.headSec.intro #vsmIs { border-left: 0px solid #777;  margin-left: 5px;
-  color: #999; }
+.headSec.intro #vsmIs { border-left: 0px solid #777;  color: #999; }
 .headSec.intro #vsmIs.ontop { position: absolute;  top: 5px; }
 
 .headSec.examples { padding-top: 7px; }
@@ -275,8 +274,8 @@ body .hide { display: none; }
 
 
 <body>
-  <div class="main">
-    <div class="headBoxWrap"><div class="headBox">
+  <div id="main">
+    <div id="headBoxWrap"><div id="headBox">
       <div class="headSec intro">
         • Below is a <b class="emph">VSM-box</b>,
         and its <b class="emph">content as JSON</b> underneath.
@@ -292,9 +291,9 @@ body .hide { display: none; }
         &nbsp;VSM <b>examples</b>,
         &nbsp;<b>image</b> export,
         &nbsp;<b>RDF</b> conversion.
-        &nbsp; &nbsp; | &nbsp; <span id="vsmIs">
-          (VSM = an intuitive <b>semantic model +</b> a <b>user interface</b>
-          to enable it).
+        &nbsp; &thinsp;<span id="vsmIs"> | &nbsp; &thinsp;
+          (VSM = intuitive <b>semantic model +</b>
+          enabling <b>user interface</b>).
         </span>
         <br>
         <div class="info">
@@ -328,10 +327,10 @@ body .hide { display: none; }
           ><label><input id="toggleNoFeet"     type="checkbox">Hide feet.</label
           ><label><input id="toggleCreateItem" type="checkbox"
             >Add 'Create' in autocomplete.</label
-          ><label><input id="toggleUseTweaks"  type="checkbox"
+          ><label class="hide"><input id="toggleUseTweaks"  type="checkbox"
             ><span class="info">Tweaks.</span></label
           ><label><input id="toggleJSON5"      type="checkbox">JSON5.</label
-          ><label style="display: none;"><input id="toggleKeepSVGCursor"
+          ><label class="hide"><input id="toggleKeepSVGCursor"
             type="checkbox">Keep cursor in SVG.</label
           ><label><input id="togglePureSVG"    type="checkbox">Pure SVG.</label
           ><label><input id="toggleRDF"        type="checkbox">Show RDF<span
@@ -431,7 +430,7 @@ body .hide { display: none; }
       );
 
       // Prevent possible flash of long text+scrollbars on page-reload.
-      $el('stateText').value = '';
+      $el('stateText').value = 'Loading...';
       $el('rdfText'  ).value = '';
 
       // Immediately size the textareas correctly.

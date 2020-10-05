@@ -188,7 +188,8 @@ function demoDictData(opt) {
         { id: 'PRS:0007', terms: [{str: 'Greta'}] },
         { id: 'PRS:0008', terms: [{str: 'Heidi'}] },
         { id: 'PRS:0010', terms: [{str: 'John'}],
-          descr: useTweaks ? '' : 'example John', z: { tweakID: 'ID:0912' } },
+          //descr: useTweaks ? '' : 'example John',
+          z: { tweakID: 'ID:0912' } },
         { id: 'PRS:0009', terms: [{str: 'Jos'}],  z: { tweakID: 'ID:1005' }
         },
         { id: 'PRS:0011', terms: [{str: 'Joy'}],  z: { tweakID: 'ID:2209' },

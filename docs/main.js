@@ -17,9 +17,7 @@
 
   var allowClassNull_initial = true;
   var hideConnFeet_initial   = false;
-  var useTweaks = true;  // Note: to get narrowest possible vsmBox, when filling
-                         // in a `vsmExamples[..]`, (i.e. with narrow endTerm):
-                         // this must be set to `true` at start!
+  var useTweaks = false;
   var imgScale = 8;
   var dlDelay  = 0;
   var whiteBox      = false;
@@ -81,11 +79,14 @@
                      // 200 (it's default) because it initializes with its
                      // default width before we can update its sizes property.
     minEndTermWidth: 40,      // } = VsmBox's default. Needed because these may..
-    minEndTermWideWidth: 100, // } ..be changed, and back.
+    minEndTermWideWidth: 22, ///100, // } ..be changed, and back.
+      // \->Note: to get narrowest possible vsmBox when filling a `vsmExamples[]`,
+      //    (i.e. with narrow endTerm): this must be set to small value at start!
     connFootVisible: !hideConnFeet_initial,
     theConnsResortDelay: 300  // (Useful to define: for live VSM-to-SVG testing).
   };
-  var minEndTermWideWidthTweak = 22; // 20 // 100;
+  var minEndTermWideWidthTweak = 22;
+
 
   var vsmBoxSizes;  // Current value of `sizes`-attribute (Object) set on vsmBox.
   var lastAutoFilledText = '';
@@ -123,7 +124,9 @@
       if (o.item.z && o.item.z.tweakID) {
         o.strs.extra = '' + o.item.z.tweakID;
       }
+      ///else  o.strs.extra = o.item.id;
     }
+    else    o.strs.extra = o.item.id;
     return o.strs;
   };
 
@@ -289,13 +292,6 @@
     catch (err) {}
   }
 
-  window.addEventListener('resize', () => setElMsgWidth(elTxt));
-  [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4] .forEach(e => {
-    e.addEventListener('mouseup' , () => setElMsgWidth(e));
-    e.addEventListener('touchend', () => setElMsgWidth(e));
-  });
-  setElMsgWidth(elTxt);
-
 
   function setMsg(msg) {  // `msg`: 1 / -1 / fill-example name / error msg.
     var d = new Date();
@@ -307,7 +303,34 @@
       ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
   }
 
+  setElMsgWidth(elTxt);
   setMsg('');
+
+
+
+  // --- Resize handling ---
+
+
+  window.addEventListener('resize', () => setElMsgWidth(elTxt));
+  [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4] .forEach(e => {
+    e.addEventListener('mouseup' , () => setElMsgWidth(e));
+    e.addEventListener('touchend', () => setElMsgWidth(e));
+  });
+
+
+  // Put `#vsmIs` msg on top while headBox is rolled up.
+  var elHBW   = $el('headBoxWrap');
+  var elVsmIs = $el('vsmIs');
+  var observer = new MutationObserver(mutations => mutations.forEach(mut => {
+    if (mut.target === elHBW) {
+      try {
+        let h = +elHBW.style.height.replace('px', '');
+        if (h < 30)  elVsmIs.classList.add   ('ontop');
+        if (h > 80)  elVsmIs.classList.remove('ontop');
+      } catch (err) { }
+    }
+  }));
+  observer.observe(elHBW, { attributes: true });
 
 
 
