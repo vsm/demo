@@ -87,7 +87,7 @@ button:active { background: #c6c6c6;  transform: scale(0.99) translate(0.3px, 0)
 
 /* ----- Specific style definitions. ----- */
 
-body .hide, .hide { display: none; }
+body .hidden, .hidden { display: none; }
 
 #main { margin: 4px 0 50px 60px;  background: #fff; }
 
@@ -100,7 +100,7 @@ body .hide, .hide { display: none; }
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
   padding-left: 15px;  padding-right: 15px; }
-.headSec.intro { padding-bottom: 7px;  position: relative; }
+.headSec.intro { padding-bottom: 7px;  lline-height: 17.5px; }
 
 .headSec button { font-size: 13px;  color: #222; }
 
@@ -115,8 +115,9 @@ body .hide, .hide { display: none; }
 .headSec.intro a:hover,
 .headSec .info a:hover { color: #6272e8; }
 
-.headSec.intro #vsmIs { border-left: 0px solid #777;  color: #999; }
-.headSec.intro #vsmIs.ontop { position: absolute;  top: 5px; }
+.headSec.intro #vsmIs { color: #999;  border-radius: 1px;
+	padding: 0 6px;  margin: 0 0 4px 0;  display: inline-block;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.23);   }
 
 .headSec.examples { padding-top: 7px; }
 #exampleButtonsAll td { vertical-align: top; }
@@ -150,7 +151,7 @@ body .hide, .hide { display: none; }
 .stateText { font-size: 11px;  font-family: consolas, courier, monospace;
   color: #222;  white-space: pre;  display: block;  box-sizing: border-box;
   border: 1px solid #e7e7e7;  resize: horizontal;  max-width: 100%;
-  line-height: 13px; padding: 1px; }
+  line-height: 13px;  padding: 1px; }
 
 #rdfText { background: #fdfdfd; }
 
@@ -277,27 +278,25 @@ body .hide, .hide { display: none; }
   <div id="main">
     <div id="headBoxWrap"><div id="headBox">
       <div class="headSec intro">
-        • Below is a <b class="emph">VSM-box</b>,
+        • <b class="emph">VSM</b> = an
+          <b class="emph">intuitive semantic</b> model
+          <b class="emph">+</b> a
+          <b class="emph">user interface</b> to enable it.
+        <br>
+        • Below is a <b class="emph">VSM-box</b> interface,
         and its <b class="emph">content as JSON</b> underneath.
+        &nbsp;&thinsp;If you <b>edit</b> either, the other updates along.
         <br>
-        • They are <b>linked</b>:
-        <b>edit</b> one and the other will update.
-        &thinsp; So you can <b>copy-paste VSM-JSON</b>.
+        • The dictionaries linked here are just small demos,
+        &nbsp;but you can add new terms with "Create" in autocomplete.
         <br>
-        • The demo uses 'stub' vsm-dictionaries,
-        &thinsp;but you can add new terms with "Create" in autocomplete.
-        <br>
-        • Also here:
+        ◦ Also here:
         &nbsp;VSM <b>examples</b>,
         &nbsp;<b>image</b> export,
         &nbsp;<b>RDF</b> conversion.
-        &nbsp; &thinsp;<span id="vsmIs"> | &nbsp; &thinsp;
-          (VSM = intuitive <b>semantic model +</b>
-          enabling <b>user interface</b>).
-        </span>
         <br>
         <div class="info">
-          • About <b>VSM</b>:
+          ◦ About <b>VSM</b>:
           <a href="https://vsm.github.io">vsm.github.io</a>.&nbsp;
           | <b>VSM-box</b>:
           <a href="http://vsm.github.io/vsm-pages/examples">examples</a>,
@@ -327,10 +326,10 @@ body .hide, .hide { display: none; }
           ><label><input id="toggleNoFeet"     type="checkbox">Hide feet.</label
           ><label><input id="toggleCreateItem" type="checkbox"
             >Add 'Create' in autocomplete.</label
-          ><label class="hide"><input id="toggleUseTweaks"  type="checkbox"
+          ><label class="hidden"><input id="toggleUseTweaks"  type="checkbox"
             ><span class="info">Tweaks.</span></label
           ><label><input id="toggleJSON5"      type="checkbox">JSON5.</label
-          ><label class="hide"><input id="toggleKeepSVGCursor"
+          ><label class="hidden"><input id="toggleKeepSVGCursor"
             type="checkbox">Keep cursor in SVG.</label
           ><label><input id="togglePureSVG"    type="checkbox">Pure SVG.</label
           ><label><input id="toggleRDF"        type="checkbox">Show RDF<span
@@ -367,7 +366,7 @@ body .hide, .hide { display: none; }
     <div id="msg" class="msg"></div>
 
     <!-- SVG export inspection code. Is shown when activated by `SVGInspect`. -->
-    <div id="svg" class="hide"
+    <div id="svg" class="hidden"
       ><div id="svgFig"  ></div
       ><div id="svgText" class="stateText loading"></div
       ><div id="svgHtml" class="stateText loading"></div
@@ -377,7 +376,7 @@ body .hide, .hide { display: none; }
       spellcheck="false" data-min-rows="15" data-cols="120"></textarea>
 
 
-    <div id="rdf" class="hide">
+    <div id="rdf" class="hidden">
 
       <div><div class="wsResizerWrap">
         <textarea id="wsResizer3" class="stateText wsResizer" readonly></textarea>
@@ -425,22 +424,30 @@ body .hide, .hide { display: none; }
       css.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css';
       css.rel = 'stylesheet';
       css.type = 'text/css';
-      setTimeout(
-        () => document.getElementsByTagName('head')[0].appendChild(css),  10
-      );
+      setTimeout(() =>
+        document.getElementsByTagName('head')[0].appendChild(css)
+      , 10);
 
-      // Prevent possible flash of long text+scrollbars on page-reload.
-      $el('stateText').value = 'Loading...';
+      // Prevent possible flash of long text+scrollbars on page-reload;
+      // and inform the user about the status.
+      const loadingMsg  = 'Loading...';
+      const loadingMsg2 = '\nIf unpkg.com is slow, try hitting Refresh.';
+      $el('stateText').value = loadingMsg;
       $el('rdfText'  ).value = '';
+      setTimeout(() => {
+        if ($el('stateText').value == loadingMsg )
+          $el  ('stateText').value += loadingMsg2;
+      }, 1000);
 
       // Immediately size the textareas correctly.
       $el(    'stateText' ).cols
         = $el('rdfText'   ).cols
         = $el('wsResizer1').cols
         = $el('wsResizer2').cols
-        = $el('stateText'   ).getAttribute('data-cols');
-      $el('stateText').rows = $el('stateText').getAttribute('data-min-rows');
-      $el(  'rdfText').rows = $el(  'rdfText').getAttribute('data-min-rows');
+        = $el('stateText' ).getAttribute('data-cols');
+      ['stateText', 'rdfText'].forEach(id =>
+        $el(id).rows = $el(id).getAttribute('data-min-rows')
+      );
 
       // Scroll to top of page (for Chrome, after refresh with collapsed headBox).
       window.addEventListener('load', () => {

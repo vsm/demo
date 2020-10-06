@@ -14,61 +14,85 @@
 function domToPureSVG(e, opt) {
   opt = opt || {};
 
-  // Handle async-response requests.
+  // First, handle requests that want an async response.
   if (opt.cb)  return setTimeout(() => {
     var svg = domToPureSVG(e, { ...opt, cb: null });
     opt.cb(svg);
   }, 0);
 
 
-  // All `opt` options are automatically available in f.*() functions: as `o`.
-  // + Note: some of these values would ideally be derived from VsmBox/CSS.
-  //   And some remain hard-coded in the f.* below for now.
-  // So this code uses some _default values__ for vsm-box, to output the SVG.
-  var isEmptyBox  = !e.querySelector('.terms .term:not(.ruler):not(.end)');
-  var endTermText =
-    (e.querySelector('.terms .term.end .label') || {}) .innerHTML ||
-    (e.querySelector('.terms .term.end input' ) || {}) .value;
-  var whiteBox = !!opt.whiteBox;
-  opt = {
-    useViewBox:     !opt.forDev,  // Use viewbox vs. width/height in <svg> tag.
-    whiteBox:       whiteBox,
-    addBorder:      !whiteBox,  // False=>zero border (even if DOM has 1px).
-    addUCConn:      true,       // False=>won't add any shown under-constr-conn.
-    addPosHL:       true,
-    showRemoveIcon: true,       // False=>still added, but kept invisible.
-    showTextCursor: false,      // False=>still added, but kept invisible.
-    showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
-    borderW:        1,
-    termsH:         17,  // (Excludes the fake white padding on top, =part of conns panel).
-    termsMarginTop: 2,
-    refConnDashArray: '2,1',    // (Chrome:'2,1' |FF:'2,1'     |'2.5,1.25').
-    refTermDashArray: '2,1.5',  // (Chrome:'2,1' |FF:'2.5,2.5' |'2.5,1.25').
-    connsFill:     whiteBox ? 'ffffff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
-    termsFill:     'ffffff',                        ///(For debug: 'ffe2e2').
-    addEndTerm:    !whiteBox || isEmptyBox || endTermText,
-    showEndTerm:   !!(isEmptyBox || endTermText),
-    tab: '  ',       // E.g. '  ' indents with two spaces per deeper level.
-    ...opt
-  };
-
+  /* // Prep for font embedding & subsetting. But embedding is not consistently..
+  const FontDataTag = '<<FontData>>';  // ..supported across current browsers &..
+  var usedChars = [];                  // ..SVG-editors. So: disabled for now. */
 
   const NotFade = ':not([class*="fade-leave"])';
 
 
-  /* // (May someday be used for font embedding, and perhaps font subsetting.
-  //  But currently this is not consistently supported by both browsers and
-  //  SVG-editor software, so this is disabled for now).
-  const FontDataTag = ''; ///'<<FontData>>';
-  var usedChars = [];  */
+  var f = decorateFs( defineFs() );
+
+  var o = initOptions(e, opt);
+  var s = f.main(o);
+  if (o.tab == '')  s = s.replace(/<\/g>\n<g>/gm, '</g><g>');
+
+  s = fillDataTags(s);
+  dataInspect(s, e, o);
+
+  return s;
 
 
-  // Define many functions that each generate a part of the SVG structure,
-  // and/or delegate parts to other functions. They can return String|Array.
-  // NOTE: These will be augmented: see further below!
-  var f = {
-    main: (e, o) => {
-      var svg = e.querySelector('svg') || e;
+
+
+  // --- Various helper functions.
+  //     All wrapped inside domToPureSVG() to prevent global pollution. ---
+
+
+  /**
+   * Add default options in addition to those given in `opt`.
+   * + Note: all options are automat. available in the decorated f.*()s: as `o`.
+   * + Note: some of these values would ideally be derived from VsmBox/CSS;
+   *   and some remain hard-coded in the f.*() for now.
+   * + So this code uses some _default values_ of vsm-box, to output the SVG.
+   */
+  function initOptions(e, opt) {
+    var isEmptyBox  = !e.querySelector('.terms .term:not(.ruler):not(.end)');
+    var endTermText =
+      (e.querySelector('.terms .term.end .label') || {}) .innerHTML ||
+      (e.querySelector('.terms .term.end input' ) || {}) .value;
+    var whiteBox = !!opt.whiteBox;
+    return {
+      useViewBox:     !opt.forDev,  // Use viewbox vs. width/height in <svg> tag.
+      whiteBox:       whiteBox,
+      addBorder:      !whiteBox,  // False=>zero border (even if DOM has 1px).
+      addUCConn:      true,       // False=>won't add any shown under-constr-conn.
+      addPosHL:       true,
+      showRemoveIcon: true,       // False=>still added, but kept invisible.
+      showTextCursor: false,      // False=>still added, but kept invisible.
+      showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
+      borderW:        1,
+      termsH:         17,  // (Excludes the fake white padding on top, =part of conns panel).
+      termsMarginTop: 2,
+      refConnDashArray: '2,1',    // (Chrome:'2,1' |FF:'2,1'     |'2.5,1.25').
+      refTermDashArray: '2,1.5',  // (Chrome:'2,1' |FF:'2.5,2.5' |'2.5,1.25').
+      connsFill:     whiteBox ? 'ffffff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
+      termsFill:     'ffffff',                        ///(For debug: 'ffe2e2').
+      addEndTerm:    !whiteBox || isEmptyBox || endTermText,
+      showEndTerm:   !!(isEmptyBox || endTermText),
+      tab: '',       // E.g. '  ' indents with two spaces per deeper level.
+      ...opt,
+      e
+    };
+  }
+
+
+
+  // - Define many functions that each generate a part of the SVG structure,
+  //   and/or delegate parts to other functions. They can return String|Array.
+  // - And then AUGMENT them with a decorator function.
+  function defineFs() {
+    var f = {};
+
+    f.main = o => {
+      var svg = o.e.querySelector('svg') || o.e;
       o.tx = 0;  // } 'translate-x' and 'translate-y': horizontal and vertical..
       o.ty = 0;  // } ..offset that the next called f.*() should apply.
       o.contW = +svg.getAttribute('width' );    // The content's width/height..
@@ -76,7 +100,7 @@ function domToPureSVG(e, opt) {
 
       // In whiteBox-mode: shrink the viewport to the terms+conns+highlights
       // bounding-box, and shift the content into it. Draw no bkgr outside it!
-      o.contBB =  calcBoundingBox(e, o);  // ("contBB"=content bounding-box).
+      o.contBB = calcBoundingBox(o);  // ("contBB"=content bounding-box).
 
       var bw2  = o.addBorder ?  o.borderW * 2 :  0;
       var boxW = o.contBB.x2 - o.contBB.x1 + bw2;
@@ -87,20 +111,21 @@ function domToPureSVG(e, opt) {
       return [
         `<svg${tags} xmlns="http://www.w3.org/2000/svg">`,
         ...indent(o, [
-          f.style(e, o),  /* f.fontData(e, o), */
-          f.box  (e, o)
+          f.style(o),  /// /* f.fontData(o), */
+          f.box  (o)
         ]),
         '</svg>'
       ];
-    },
+    };
 
-    style: (e, o) => [
+    f.style = o => [
       '<style>',
-      indent(o, f.styleData(e)),
+      indent(o, f.styleData(o)),
       '</style>'
-    ],
-    styleData: (e, o) => `
-     ${'* { stroke: none; }'  /* Makes Inkscape-1.0.1-->StrokeToPath not stroke text */ }
+    ];
+
+    f.styleData = o => `
+     ${'rect, path, text { stroke: none; }'  /* For Inkscape-1.0.1's StrokeToPath */ }
         .box-border { stroke: #d3d9e5;  stroke-width: 1px;  fill: none; }
      ${  o.whiteBox ? '' :
        '.conns-fill { fill: #' + o.connsFill + '; } ' +
@@ -140,20 +165,20 @@ function domToPureSVG(e, opt) {
         .mouse { stroke: #000000;  fill: #ffffff;  stroke-width: 0.5px; }
         .click { stroke: #000000;  fill: none;     stroke-width: 0.8px; }
         .hide, .r.end.hide { stroke: none; fill: none; }
-      `.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '))
-      /*
-      @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
-        src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/font/wine-tahoma.woff') format('woff'); }
-      @font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;
-        src: local('Tahoma Bold'), local('Verdana Bold'); }
-      */
-    ,
+      `.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
     /*
-    fontData: (e, o) => [
-      FontDataTag  // To be replaced with data for encountered glyphs.
-    ],
+        @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
+          src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/font/wine-tahoma.woff') format('woff'); }
+        @font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;
+          src: local('Tahoma Bold'), local('Verdana Bold'); }
     */
-    box: (e, o) => {
+
+    /*
+    f.fontData = o =>
+      FontDataTag;  // To be replaced with data for encountered glyphs.
+    */
+
+    f.box = o => {
       var oPlus = {  // (This will be merged with `o` by the decorator).
         connsH: o.contH - o.termsH,  // This *includes* the 'fake' white margin..
                     // ..above the terms (where a conn-highlight may reach into).
@@ -162,25 +187,26 @@ function domToPureSVG(e, opt) {
       };
 
       var a = [];              // Line below: `s`: querySelector relative to `e`.
-      if (o.addBorder)  a.push(f.border(e, { s: 'rect' }));  // No `oPlus` here.
-      if (!o.whiteBox)  a.push(f.backgrounds(e, oPlus));
+      if (o.addBorder)  a.push(f.border({ s: 'rect' }));  // No `oPlus` here.
+      if (!o.whiteBox)  a.push(f.backgrounds(oPlus));
       a = group(o, a);
 
       return a.concat([
-        f.posHL      (e, { ...oPlus,  s: `.pos-highlight${NotFade}` }),
-        f.hl         (e, { ...oPlus,  s: `.conn-highlight${NotFade}` }),
-        f.conns      (e, { ...oPlus,  s: `.conns` }),
-        f.removeIcon (e, { ...oPlus,  s: `.conn-remove-icon${NotFade}` }),
-        f.terms      (e, { ...oPlus,  s: `.terms` }),
-        f.mouse      (e, oPlus)
+        f.posHL      ({ ...oPlus,  s: `.pos-highlight${NotFade}` }),
+        f.hl         ({ ...oPlus,  s: `.conn-highlight${NotFade}` }),
+        f.conns      ({ ...oPlus,  s: `.conns` }),
+        f.removeIcon ({ ...oPlus,  s: `.conn-remove-icon${NotFade}` }),
+        f.terms      ({ ...oPlus,  s: `.terms` }),
+        f.mouse      (oPlus)
       ]);
-    },
-    border: (e, o) =>
-      rect(e, o, 'box-border', {
+    };
+
+    f.border = o =>
+      rect(o, 'box-border', {
         x: o.borderW/2,  w: o.contW + o.borderW,
-        y: o.borderW/2,  h: o.contH + o.borderW })
-    ,
-    backgrounds: (e, o) => {
+        y: o.borderW/2,  h: o.contH + o.borderW });
+
+    f.backgrounds = o => {
       if (o.whiteBox)  return '';  // If whiteBox, don't draw background.
       var cut = {
         left  : o.contBB.x1,
@@ -194,78 +220,89 @@ function domToPureSVG(e, opt) {
       var termsBgH = o.termsH + (showConns ?  o.termsMarginTop :  0) - cut.bottom;
       var arr = [];
       if (showConns)  arr.push(
-        rect(e, o, 'conns-fill',
+        rect(o, 'conns-fill',
           { x: cut.left,  y: cut.top,   w: trimmedW,  h: termsBgY - cut.top }) );
       arr.push(
-        rect(e, o, 'terms-fill',
+        rect(o, 'terms-fill',
           { x: cut.left,  y: termsBgY,  w: trimmedW,  h: termsBgH }) );
       return arr;
-    },
-    posHL: (e, o) =>
+    };
+
+    f.posHL = o =>
       !o.addUCConn || !o.addPosHL ?  '' :
-        rect(e, o, 'pos-hl', { y: 0,  h: o.connsH })  // Other coos: auto-filled.
-    ,
-    hl: (e, o) => group(o, [
-      f.hlBackTop (e, { s: '.hl-back-top'               } ),
-      f.hlLeg     (e, { s: '.hl-leg'      ,  many: true } ),
-      f.hlLegUnder(e, { s: '.hl-leg-under',  many: true } ),
-    ]),
-    hlBackTop:  (e, o) => path(e, o, 'hl-back-top' ) ,
-    hlLeg:      (e, o) => rect(e, o, 'hl-leg'      ) ,
-    hlLegUnder: (e, o) => rect(e, o, 'hl-leg-under') ,
-    conns: (e, o) =>
-      f.conn(e, { s: '.conn',  many: true })
-    ,
-    conn: (e, o) => {
+        rect(o, 'pos-hl', { y: 0,  h: o.connsH });  // Other coos: auto-filled.
+
+    f.hl = o => group(o, [
+      f.hlBackTop ({ s: '.hl-back-top'               } ),
+      f.hlLeg     ({ s: '.hl-leg'      ,  many: true } ),
+      f.hlLegUnder({ s: '.hl-leg-under',  many: true } ),
+    ]);
+
+    f.hlBackTop  = o => path(o, 'hl-back-top' );
+    f.hlLeg      = o => rect(o, 'hl-leg'      );
+    f.hlLegUnder = o => rect(o, 'hl-leg-under');
+
+    f.conns = o =>  f.conn({ s: '.conn',  many: true });
+
+    f.conn = o => {
       var oPlus = {
-        ref    : classNames(e).includes('r') ?  ' ref' :  '',
-        ucLegNr: !e.querySelector('.conn-leg.uc') ?  -1 :
-                  e.querySelectorAll('.conn-leg').length - 1
+        ref    : classNames(o.e).includes('r') ?  ' ref' :  '',
+        ucLegNr: !o.e.querySelector('.conn-leg.uc') ?  -1 :
+                  o.e.querySelectorAll('.conn-leg').length - 1
       };
       return group(o, [
-        f.back          (e, { ...oPlus,  s: '.back',      many:  true }),
-        f.legFootPointer(e, { ...oPlus,  s: '.conn-leg',  many:  true }),
-        f.stubs         (e, oPlus)
+        f.back          ({ ...oPlus,  s: '.back',      many:  true }),
+        f.legFootPointer({ ...oPlus,  s: '.conn-leg',  many:  true }),
+        f.stubs         (oPlus)
       ]);
-    },
-    back: (e, o) =>
-      line(e, o, `back${ o.ref }${ classNames(e).includes('two') ? ' two' : '' }`)
-    ,
-    legFootPointer: (e, o) => {
+    };
+
+    f.back = o => line(o,
+      `back${ o.ref }${ classNames(o.e).includes('two') ? ' two' : '' }`);
+
+    f.legFootPointer = o => {
       var uc = o.ucLegNr == o.nr ? ' uc' : '';
       return [
-        f.foot   (e, { uc,  s: '.foot',  many: true }),
-        f.leg    (e, { uc,  s: '.leg'               }),
-        f.pointer(e, { uc,  s: '.pointer'           }),
+        f.foot   ({ uc,  s: '.foot',  many: true }),
+        f.leg    ({ uc,  s: '.leg'               }),
+        f.pointer({ uc,  s: '.pointer'           }),
       ];
-    },
-    foot:    (e, o) => line(e, o, `foot${ o.ref }${ o.uc }`),
-    leg:     (e, o) => line(e, o, `leg${  o.ref }${ o.uc }`),
-    pointer: (e, o) => path(e, o, `${ pointerClassName(e) }${ o.uc }`),
-    stubs: (e, o) => [
-      f.stubBack   (e, { s: '.stub-back'    }),
-      f.stubFoot   (e, { s: '.stub-foot'    }),
-      f.stubLeg    (e, { s: '.stub-leg'     }),
-      f.stubPointer(e, { s: '.stub-pointer' })
-    ],
-    stubBack:    (e, o) => line(e, o, 'back stub'),
-    stubFoot:    (e, o) => line(e, o, 'foot stub'),
-    stubLeg:     (e, o) => line(e, o, 'leg stub' ),
-    stubPointer: (e, o) => path(e, o, `${ pointerClassName(e) } stub`),
-    removeIcon: (e, o) => group(o, [
-      f.riBg(e, { s: '.ri-bg' }),
-      f.riFg(e, { s: '.ri-fg' }),
-    ]),
-    riBg: (e, o) =>
-      rect(e, o, `ri-bg${ o.showRemoveIcon ?  '' : ' hide' }`, { rx: '~' })
-    ,
-    riFg: (e, o) => {   // Also split path parts: better for Illustrator.
-      var c =    `ri-fg${ o.showRemoveIcon ?  '' : ' hide' }`;
-      var s = e.getAttribute('d') || '';
-      var a = s.match(/M[^M]+/g) || [s];
-      return a.map(d => path(e, o, c, { d }));
-    },
-    terms: (e, o) => {
+    };
+
+    f.foot    = o => line(o, `foot${ o.ref }${ o.uc }`);
+    f.leg     = o => line(o, `leg${  o.ref }${ o.uc }`);
+    f.pointer = o => path(o, `${ pointerClassName(o.e) }${ o.uc }`);
+
+    f.stubs = o => [
+      f.stubBack   ({ s: '.stub-back'    }),
+      f.stubFoot   ({ s: '.stub-foot'    }),
+      f.stubLeg    ({ s: '.stub-leg'     }),
+      f.stubPointer({ s: '.stub-pointer' })
+    ];
+
+    f.stubBack    = o => line(o, 'back stub');
+    f.stubFoot    = o => line(o, 'foot stub');
+    f.stubLeg     = o => line(o, 'leg stub' );
+    f.stubPointer = o => path(o, `${ pointerClassName(o.e) } stub`);
+
+    f.removeIcon = o => {
+      var hide = o.showRemoveIcon ?  '' : ' hide';
+      return group(o, [
+        f.riBg({ s: '.ri-bg',  hide }),
+        f.riFg({ s: '.ri-fg',  hide }),
+      ]);
+    };
+
+    f.riBg = o =>
+      rect(o, `ri-bg${ o.hide }`, { rx: '~' });
+
+    f.riFg = o => {   // Also split path parts: better for Illustrator.
+      var d    = o.e.getAttribute('d') || '';
+      var dArr = d.match(/M[^M]+/g) || [d];
+      return dArr.map(d =>  path(o, `ri-fg${ o.hide }`, { d }) );
+    };
+
+    f.terms = o => {
       var oPlus = {
         s     : '.term:not(.ruler)' + (!o.addEndTerm ? ':not(.end)' : ''),
         tx    : o.tx + 0.5,
@@ -275,53 +312,53 @@ function domToPureSVG(e, opt) {
         many  : true
       };
       // Prepare to possibly place a dragged term at its placeholder's position.
-      var x = e.querySelector('.drag-placeholder');
+      var x = o.e.querySelector('.drag-placeholder');
       if (x  &&  (x = elStyleNum(x, 'left')) !== undefined)  oPlus.dragPlhX = x;
-      return f.term(e, oPlus);
-    },
+      return f.term(oPlus);
+    };
 
-    term: (e, o) => group(o, [
-      f.termRect(e),
-      f.termText(e, trp(o, o.txText, o.tyText)),
-    ]),
+    f.term = o => group(o, [
+      f.termRect(o),
+      f.termText( trp(o, o.txText, o.tyText) ),
+    ]);
 
-    termRect: (e, o) => {
-      var { type, isEdit, isEnd, isFocal, x, w } = analyzeTermElem(e, o);
+    f.termRect = o => {
+      var { type, isEdit, isEnd, isFocal, x, w } = analyzeTermElem(o);
       if (!type || !w || x===undefined)  return ''; // drag-placeholder->type=''.
       var c = type +
         (isEdit ? ' edit' : '') +
         (isEnd  ? ' end'  : '') +  (isEnd && !o.showEndTerm  ? ' hide'  : '');
       var a = [
-        rect(e, o, `r ${c}`, { x,  y: '',  w: w - 1,  h: 14,  rx: 1.5 })
+        rect(o, `r ${c}`, { x,  y: '',  w: w - 1,  h: 14,  rx: 1.5 })
       ];
       if (type == 'ref')  a.push(  // Extra element: for ref-term border.
         a[0].replace(/\bref\b/, 'ref-bord')
       );
       if (isFocal) { // Extra element: for focal term.
-        a.push(line(e, o, 'r focal', {
+        a.push(line(o, 'r focal', {
           x1: x     + 1 + 1.4  ,  // } 1   = rect border-width. 2 = twice.
           x2: x + w - 2 - 1.4/2,  // } 1.4 = line stroke-width.
           y1: 2,  y2: 2
         }));
       }
-      if (e.querySelector('input')) {
-        a.push(  f.textCursor(e,  trp(o, x + 4, 0)  )  );
+      if (o.e.querySelector('input')) {
+        a.push(  f.textCursor( trp(o, x + 4, 0)  )  );
       }
       return a;
-    },
+    };
 
-    textCursor: (e, o) =>
-      line(e, o,  `textcursor${ o.showTextCursor ?  '' : ' hide'}`,
-        { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 })
-    ,
+    f.textCursor = o =>
+      line(o,  `textcursor${ o.showTextCursor ?  '' : ' hide'}`,
+        { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 });
 
-    termText: (e, o) => {
-      var { type, isEdit, isEnd, isFocal, x, w } = analyzeTermElem(e, o);
+
+    f.termText = o => {
+      var { type, isEdit, isEnd, isFocal, x, w } = analyzeTermElem(o);
       if (!type || !w || x === undefined)  return '';
       var c = isEdit ? 'edit' :  isEnd ? 'end' :  type;
       var q, s;
 
-      if ((q = e.querySelector('.label'))  &&  (s = q.innerHTML)) {
+      if ((q = o.e.querySelector('.label'))  &&  (s = q.innerHTML)) {
         if (classNames(q).includes('label-placehold'))  c = 'plac';
 
         // Process a label with styling (bold, etc).
@@ -366,37 +403,35 @@ function domToPureSVG(e, opt) {
             }
           });
           s = b.join('');
-
-          // Add newlines and indentation, without whitespace between tspans.
-          s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
         }
       }
 
       // If <input> with text, show that instead (corresp. to edit-terms' label).
-      if (q = e.querySelector('input')) {
+      if (q = o.e.querySelector('input')) {
         if (q.value)  s = q.value;
-        else if (q = e.querySelector('.placehold')) {
+        else if (q = o.e.querySelector('.placehold')) {
           s = q.innerHTML;
           c = 'plac';
         }
       }
 
-      s = !s ?  '' :  text(e, o, `t ${c}`, { x,  w: w - 1 }) + s + '</text>';
-      /*
-      usedChars = [...usedChars, ...s.replace(/<.+?>/g,'').split('')];
-      */
+      s = !s ?  '' :  text(o, `t ${c}`, { x,  w: w - 1 }) + s + '</text>';
+      /* usedChars = [...usedChars, ...s.replace(/<.+?>/g,'').split('')]; */
+
+      // Add newlines and indentation, without whitespace between tspans.
+      s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
 
       return s;
-    },
+    };
 
 
-    mouse: (e, o) => {
+    f.mouse = o => {
       // Add mouse + click-stripes, if a pos- or conn-highlight is shown.
       // Position it relative to pos- or conn-hl's top-right corner.
       var hl =
         ( o.addUCConn && o.addPosHL ?
-          e.querySelector(`.pos-highlight${NotFade}`) :  0 ) ||
-        e.querySelector(`.conn-remove-icon${NotFade} .ri-bg`);
+          o.e.querySelector(`.pos-highlight${NotFade}`) :  0 ) ||
+        o.e.querySelector(`.conn-remove-icon${NotFade} .ri-bg`);
       if (!hl)  return '';
 
       var x2 = +hl.getAttribute('x') + +hl.getAttribute('width');
@@ -405,17 +440,19 @@ function domToPureSVG(e, opt) {
       var mc = 'mouse' + (o.showMouse      ?  '' : ' hide');
       var cc = 'click' + (o.showMouse == 2 ?  '' : ' hide');
       return group(o, [
-        path(e, o, mc, { d: 'M7.15 7.2 v15.25 l3.35 -3.35 ' +
+        path(o, mc, { d: 'M7.15 7.2 v15.25 l3.35 -3.35 ' +
           'l2.15 5.2 l2.45 -1.25 l-2.15 -4.85 l4.9 -0.35 Z' }),
         ...group(o, [
-          line(e, o, cc, { x1:  4   , y1: 5   , x2: 1.55 , y2: 2.8 }),
-          line(e, o, cc, { x1:  3.15, y1: 8.35, x2: 0    , y2: 9.3 }),
-          line(e, o, cc, { x1: 10.3 , y1: 5   , x2: 12.75, y2: 2.8 }),
-          line(e, o, cc, { x1: 11.15, y1: 8.35, x2: 14.3 , y2: 9.3 }),
-          line(e, o, cc, { x1:  7.15, y1: 3.3 , x2:  7.15, y2: 0   })
+          line(o, cc, { x1:  4   , y1: 5   , x2: 1.55 , y2: 2.8 }),
+          line(o, cc, { x1:  3.15, y1: 8.35, x2: 0    , y2: 9.3 }),
+          line(o, cc, { x1: 10.3 , y1: 5   , x2: 12.75, y2: 2.8 }),
+          line(o, cc, { x1: 11.15, y1: 8.35, x2: 14.3 , y2: 9.3 }),
+          line(o, cc, { x1:  7.15, y1: 3.3 , x2:  7.15, y2: 0   })
         ])
       ]);
-    }
+    };
+
+    return f;
   };
 
 
@@ -431,46 +468,55 @@ function domToPureSVG(e, opt) {
    * - If `o.many` is truthy, then new-func calls its (augmented) self for all
    *   matching `o.s` child elements, and returns the combined result.
    */
-  var oStack = [];  // Each nested call adds its so-far accumulated `o` here.
-  Object.keys(f).forEach(key => {
-    var origFunc = f[key];
-    f[key] = (e, o) => {
-      // Merge parent-f.x's + own new options `o`. And enable nested f.* calls
-      // to use these (+ some decorator-made resets) as their own parent-`o`.
-      o = { ...oStack.slice(-1)[0],  ...o };
-      oStack.push({ ...o,  ...{ s: '',  many: false,  nr: -1 } });
+  function decorateFs(f) {
+    var oStack = [];  // Each nested call adds its so-far accumulated `o` here.
+    var lastO  = () => oStack.slice(-1)[0];
 
-      // Multiply and combine calls, for `o.many`. Keep only non-empties.
-      if (e && o.many && o.s) {
-        var a = [];
-        e.querySelectorAll(o.s) .forEach((e, i) => {
-          var s = f[key](e, { ...o,  s: '',  many: false,  nr: i });
-          if (s)  a.push(s);
-        });
-      }
+    Object.keys(f).forEach(key => {
+      var origFunc = f[key];
 
-      else {
-        // Move on to a child Node.
-        if (e && o.s) {
-          e = e.querySelector(o.s);
-          if (!e)  return '';
+      f[key] = o => {
+        // Merge parent-f.x's + own new options `o`. And enable nested f.* calls
+        // to use these (+ some decorator-made resets) as their own parent-`o`.
+        o = { ...lastO(),  ...o };
+        var e = o.e;
+
+        // Multiply and combine calls, for `o.many`. Keep only non-empties.
+        if (e && o.many && o.s) {
+          var a = [];
+          e.querySelectorAll(o.s) .forEach((e, i) => {
+            Object.assign(o,  { s: '',  many: false,  e,  nr: i });
+            oStack.push(o);
+            var s = f[key](o);
+            if (s)  a.push(s);
+            oStack.pop();
+          });
         }
 
-        // Call original function.  Make the result an Array, without empties.
-        a = origFunc(e, { ...o,  s: '' });  // Reset some option too.
-        a = makeProperTagArray(a);
-      }
+        else {
+          // Move on to a child Node.
+          if (e && o.s) {
+            e = e.querySelector(o.s);
+            if (!e)  return '';
+          }
 
-      oStack.pop();
-      return a.join('\n');
-    }
-  });
+          // Call original function.  Make the result an Array, without empties.
+          Object.assign(o,  { s: '', e });
+          oStack.push(o);
+          a = origFunc(o);
+          a = makeProperTagArray(a);
+          oStack.pop();
+        }
+
+        return a.join('\n');
+      };
+
+    });
+
+    return f;
+  }
 
 
-
-
-  // --- Various helper functions ---
-  //     (All wrapped inside domToPureSVG() to prevent global pollution).
 
   // Makes Array[String]|String `a` into an Array, and removes empty elements.
   function makeProperTagArray(a) {
@@ -501,25 +547,26 @@ function domToPureSVG(e, opt) {
 
   // Shorthands for shape()-calls. And for needed but absent `coos`-properties:
   // it makes shape() fetch their values from `e`'s attributes.
-  function rect(e, o, c, coos) {
-    return shape('rect', e, o, c, {  x:'~',  y:'~',  w:'~',  h:'~', ...coos });
+  function rect(o, c, coos) {
+    return shape('rect', o, c, {  x:'~',  y:'~',  w:'~',  h:'~', ...coos });
   }
-  function line(e, o, c, coos) {
-    return shape('line', e, o, c, { x1:'~', y1:'~', x2:'~', y2:'~', ...coos });
+  function line(o, c, coos) {
+    return shape('line', o, c, { x1:'~', y1:'~', x2:'~', y2:'~', ...coos });
   }
-  function path(e, o, c, coos) {
-    return shape('path', e, o, c, { d: '~', ...coos });
+  function path(o, c, coos) {
+    return shape('path', o, c, { d: '~', ...coos });
   }
-  function text(e, o, c, coos) {
-    return shape('text', e, o, c, { x: '~', y: '~', w: '~', ...coos } , '>');
+  function text(o, c, coos) {
+    return shape('text', o, c, { x: '~', y: '~', w: '~', ...coos } , '>');
   }
 
 
   // Creates a <rect>, <line>, etc SVG-tag.
-  function shape(tagName, e, o, classNames, coos, end) {  // E.g. `coos={x,y,..}`.
+  function shape(tagName, o, classNames, coos, end) {  // E.g. `coos={x,y,..}`.
     // For the coordinates(`coos`)'s keys x/y/w/h/x1/y1/x2/y2/rx/d/_:
     // - replace any '~' value by `e`'s corresp. attribute, e.g. y2:'~'<--y2="..",
     // - tx/ty-shift all values,  - clean up `d` values.
+    var round = round2;
 
     var coosStr =  // (Line 1+2 below create a standard ordering for coos' keys).
       ['x', 'y', 'w', 'h', 'x1', 'y1', 'x2', 'y2', 'rx', 'd']
@@ -527,7 +574,7 @@ function domToPureSVG(e, opt) {
       .map   (k => {
         let v = coos[k];
         k = k == 'w' ? 'width' :  k == 'h' ? 'height' :  k;
-        v = v == '~' ? e.getAttribute(k) :  v == '' ? 0 :  v;
+        v = v == '~' ? o.e.getAttribute(k) :  v == '' ? 0 :  v;
         v =
           ['x', 'x1', 'x2'].includes(k) ?  +v + o.tx :
           ['y', 'y1', 'y2'].includes(k) ?  +v + o.ty :
@@ -537,9 +584,10 @@ function domToPureSVG(e, opt) {
             .replace( /([HV]) ?(-?\d+(?:\.\d+)?)/g,
               ($0, c, n)    => `${ c }${ +n + (c=='H' ? o.tx : o.ty) }` )
             .replace(/-?\d+\.\d\d\d+/g,
-              n => round2(n) )                  // E.g. '1.8000000001' -> '1.8'.
+              n => round(n) )                  // E.g. '1.8000000001' -> '1.8'.
             .replace(/(\d)([A-Z])/gi, '$1 $2')  // E.g. '..1L..' -> '..1 L..'.
             .replace(/([A-Z]) /gi, '$1') :  v;  // E.g. 'M 1' -> 'M1'.
+        if (k != 'd')  v = round(v);
         return `${ k }="${ v }"`;
       })
       .join(' ');
@@ -552,7 +600,7 @@ function domToPureSVG(e, opt) {
 
 
 
-  function calcBoundingBox(e, o) {
+  function calcBoundingBox(o) {
     if (!o.whiteBox || o.addBorder){
       return { x1: 0, y1: 0, x2: o.contW, y2: o.contH };  // Content's bndn.-box.
     }
@@ -563,6 +611,7 @@ function domToPureSVG(e, opt) {
                   // ..of its removeIcon); y1/y2 of uc-conn-leg).
     var y2 = [];  // top of terms + height of a termRect.
 
+    var e = o.e;
     var qTerms = e.querySelectorAll('.terms .term:not(.ruler):not(.drag)' +
       (!o.addEndTerm ? ':not(.end)' : '') );  // (Includes .drag-placeholder).
     var qRIBG       = e.querySelector   (`.conn-remove-icon${NotFade} .ri-bg`);
@@ -615,28 +664,27 @@ function domToPureSVG(e, opt) {
   }
 
 
-  // E.g. for element with style="left:3px" and key='left'/'aa' => 3/undefined.
+  // E.g. for element with style="left:3px", and key='left'/'aa': => 3/undefined.
   function elStyleNum(e, key) {
     return e.style[key] && +e.style[key] .replace('px', '')
   }
 
 
-  function analyzeTermElem(e, o) {  // => { type, isEdit, isEnd, isFocal, x, w }
-    var c    = classNames(e);
+  function analyzeTermElem(o) {  // Returns: {type, isEdit, isEnd, isFocal, x, w}.
+    var c    = classNames(o.e);
     var type = '';  // Will stay '' for the drag-placeholder.
     if (!c.includes('drag-placeholder') && !c.includes('ruler')) {
       type =  c.includes('ref') ? 'ref' :  // Note: classNames 'inst' and 'ref' co-occur.
         c.filter(s => [ 'inst', 'class', 'lit' ].includes(s)) [0] ||  'inst';
     }
-    var qq={
+    return {
       type,
       isEdit : c.includes('edit' ),
       isEnd  : c.includes('end'  ),
       isFocal: c.includes('focal'),
-      x: c.includes('drag') ? o.dragPlhX : elStyleNum(e, 'left'),
-      w: elStyleNum(e, 'width')
+      x: c.includes('drag') ? o.dragPlhX : elStyleNum(o.e, 'left'),
+      w: elStyleNum(o.e, 'width')
     };
-    return qq;
   }
 
 
@@ -653,7 +701,7 @@ function domToPureSVG(e, opt) {
 
 
 
-  function applyModifications() {
+  function fillDataTags() {
     /*
     // Add font glyph data.
     var glyphs = { 'a': '<glyph unicode="a" horiz-adv-x="..." d="..."/>', 'b': '' };
@@ -679,10 +727,10 @@ function domToPureSVG(e, opt) {
 
   /**
    * If asked so in `opt`, will fill three HTML-elements with inspection data:
-   * the generated SVG code as a figure, and as text (code), and the original HTML
-   * from the vsm-box DOM-element.
+   * 1) the generated SVG code as a figure, 2) the generated SVG as text (code),
+   * and 3) the original HTML from the vsm-box DOM-element.
    */
-  function dataInspect(s, e, opt) {
+  function dataInspect(s, vsmBoxEl, opt) {
     if (opt.svgInspect && opt.forDev) {
       var { elSVGFig, elSVGTxt, elSVGHtm } = opt.svgInspect;
       // Show the SVG as image and as text.
@@ -690,10 +738,10 @@ function domToPureSVG(e, opt) {
       elSVGTxt.innerHTML = s
         ///.replace(/<style>[\s\S]*<\/style>\s*/, '') // Hide the long <style>-tag.
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/@font-face/g, '_font-face');  // No global @ff-interference.
+        .replace(/@font-face/g, '_font-face');  // No global @f-f interference.
 
       // Show browser-generated svg+html.
-      elSVGHtm.innerHTML = formatXml( e.innerHTML
+      elSVGHtm.innerHTML = formatXml( vsmBoxEl.innerHTML
         .replace(/\s*<!---->\s*?/g, '')
         .replace(/ stroke-dasharray="none"/g, '')
         .replace(/ stroke-width: 1px;/g, '')
@@ -724,14 +772,4 @@ function domToPureSVG(e, opt) {
     formatted = formatted.replace(/(<[a-z]+) >/g, '$1>');
     return formatted.substring(1, formatted.length - 2);
   }
-
-
-
-
-  // --- Main part, calling all the above. ---
-
-  var s = f.main(e, opt);
-  s = applyModifications(s);
-  dataInspect(s, e, opt);
-  return s;
 }

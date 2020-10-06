@@ -39,7 +39,7 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 
   • Open SVG
   • Select all,  Type   -> Create Outlines                       (converts font characters to path data)
-  • Select all,  Object -> Expand Appearance                     (for e.g. shadows/effects)
+  • Select all,  Object -> Expand Appearance                     (for shadows and effects, if applicable)
   • Select all,  Object -> Path -> Outline Stroke                (makes box-border not overlapped by content bkgr, and arrows positioned well)
   • Select all,  Object -> Transform -> Scale --> 800%  (|1600)  (prevents jagged text due to Illustrator cutting off small numbers' decimals)
     + with 'Scale Corners' and 'Scale Strokes & Effects' checked.

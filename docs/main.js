@@ -18,6 +18,7 @@
   var allowClassNull_initial = true;
   var hideConnFeet_initial   = false;
   var useTweaks = false;
+  var useTinyMinEndTermWidths = true;
   var imgScale = 8;
   var dlDelay  = 0;
   var whiteBox      = false;
@@ -60,7 +61,7 @@
   var elRDF      = $el('rdf');
 
   if (svgInspect)  {
-    $el('svg').classList.remove('hide');
+    $el('svg').classList.remove('hidden');
     elRsz2.classList.add('smallSep');
     var elSVGFig = $el('svgFig');
     var elSVGTxt = $el('svgText');
@@ -79,13 +80,14 @@
                      // 200 (it's default) because it initializes with its
                      // default width before we can update its sizes property.
     minEndTermWidth: 40,      // } = VsmBox's default. Needed because these may..
-    minEndTermWideWidth: 22, ///100, // } ..be changed, and back.
+    minEndTermWideWidth: 100, // } ..be changed, and back.
       // \->Note: to get narrowest possible vsmBox when filling a `vsmExamples[]`,
       //    (i.e. with narrow endTerm): this must be set to small value at start!
     connFootVisible: !hideConnFeet_initial,
     theConnsResortDelay: 300  // (Useful to define: for live VSM-to-SVG testing).
   };
-  var minEndTermWideWidthTweak = 22;
+  var minEndTermWidth_Tiny     = 1;
+  var minEndTermWideWidth_Tiny = 22; // 20 // 100;
 
 
   var vsmBoxSizes;  // Current value of `sizes`-attribute (Object) set on vsmBox.
@@ -197,12 +199,15 @@
   widthToggle();
 
   // Note: vsmBox currently does not reduce width (until page reload), so this
-  // code only narrows a VsmBox, when `useTweaks==true` at start! <---
+  // code only narrows a VsmBox, when `useTweaks` or `useTinyMinEndTermWidths`
+  // is `true` at start!  <---
   function widthToggle() {
+    var normal = !(useTweaks || useTinyMinEndTermWidths);
     updateVsmBoxSizes({
-      minEndTermWidth:     useTweaks ?  1 : vsmBoxInitialSizes.minEndTermWidth,
-      minEndTermWideWidth: useTweaks ? minEndTermWideWidthTweak:
-                                            vsmBoxInitialSizes.minEndTermWideWidth
+      minEndTermWidth:     normal ? vsmBoxInitialSizes.minEndTermWidth :
+                                                       minEndTermWidth_Tiny,
+      minEndTermWideWidth: normal ? vsmBoxInitialSizes.minEndTermWideWidth :
+                                                       minEndTermWideWidth_Tiny
     });
   }
 
@@ -238,10 +243,10 @@
   // Init checkbox for showing the RDF-conversion textarea.
   el = $el('toggleRDF');
   el.checked = showRDF;
-  elRDF.classList[!showRDF ? 'add' : 'remove']('hide');
+  elRDF.classList[!showRDF ? 'add' : 'remove']('hidden');
   el.addEventListener('change', function() {
     showRDF = !showRDF;
-    elRDF.classList.toggle('hide');
+    elRDF.classList.toggle('hidden');
     ///if (showRDF) {
     ///  setTimeout(() => elRDF.scrollIntoView({ behavior: 'smooth' }), 250);
     ///}
@@ -316,21 +321,6 @@
     e.addEventListener('mouseup' , () => setElMsgWidth(e));
     e.addEventListener('touchend', () => setElMsgWidth(e));
   });
-
-
-  // Put `#vsmIs` msg on top while headBox is rolled up.
-  var elHBW   = $el('headBoxWrap');
-  var elVsmIs = $el('vsmIs');
-  var observer = new MutationObserver(mutations => mutations.forEach(mut => {
-    if (mut.target === elHBW) {
-      try {
-        let h = +elHBW.style.height.replace('px', '');
-        if (h < 30)  elVsmIs.classList.add   ('ontop');
-        if (h > 80)  elVsmIs.classList.remove('ontop');
-      } catch (err) { }
-    }
-  }));
-  observer.observe(elHBW, { attributes: true });
 
 
 
