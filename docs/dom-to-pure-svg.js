@@ -182,7 +182,7 @@ function domToPureSVG(e, opt) {
         .r.lit.edit      { stroke: #e1c2c7;  }
         .r.edit, .r.ref-bord  { fill: none;  }
         .r.inst.end      { stroke: #f0f0f0;  }
-        .r.focal    { stroke: #aaaaaa;  stroke-dasharray: 0 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
+        .r.focal    { stroke: #aaaaaa;  stroke-dasharray: 0.1 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
         .textcursor { stroke: #000000;  stroke-width: 1px; }
         .t          { font: 11px tahoma, sans-serif;  white-space: pre; }
         .t.inst, .t.ref { fill: #1c2a47; }
@@ -203,7 +203,7 @@ function domToPureSVG(e, opt) {
         .foot.stub  { stroke: #f2f2f2;  stroke-width: ${_.clw}px; }
         .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${_.dm(o.refConnDashArray)}; }
         .r.ref-bord { stroke-dasharray: ${_.dm(o.refTermDashArray)}; }
-        .r.focal    { stroke-dasharray: 0 4;  stroke-width: 2px; }
+        .r.focal    { stroke-dasharray: 0.1 4;  stroke-width: 2px; }
         .r { stroke-width: ${_.tbw}px; }
         .r.class, .r.lit { fill: none; }
         .r.ref-bord { stroke: #000000; }
@@ -381,7 +381,10 @@ function domToPureSVG(e, opt) {
       var sRect = rect(o, `r ${c}`, { x,  y: '',  w: w - 1,  h: o.hRect,
         rx: o.rxRect });
       var a = [];
-      if (!o.sketchBox || ['class', 'lit'].includes(type) || isEdit) {
+      if (
+        !(type == 'ref'  &&  isEdit)  &&
+        (!o.sketchBox  ||  ['class', 'lit'].includes(type)  ||  isEdit)
+      ) {
         a.push(sRect);
       }
       if (type == 'ref')  a.push(  // Extra element: for ref-term border.
