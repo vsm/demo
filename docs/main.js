@@ -14,27 +14,27 @@
 
   if (svgInspect == 2)  setInterval(setPureSVGText, 1e3);  // Auto-refreshes it.
 
-
-  var allowClassNull_initial = true;
-  var hideConnFeet_initial   = false;
-  var useTweaks = false;
+  var whiteBox             = false;
+  var hideConnFeet_initial = false;
+  var sketchBox            = false;
+  var allowClassNull_initial  = true;
   var useTinyMinEndTermWidths = true;
-  var imgScale = 8;
-  var dlDelay  = 0;
-  var whiteBox      = false;
-  var autoWhiteBox  = true;
+  var useTweaks = false;
+  var json5     = true;
+  var pureSVG   = true;
+  var showRDF   = false;
+  var imgScale  = 8;
+  var dlDelay   = 0;
   var keepSVGCursor = false;
-  var json5         = true;
-  var pureSVG       = true;
-  var showRDF       = false;
+  var autoWhiteBox  = true;
 
-  var autofocus     = true;
+  var autofocus = true;
   var exampleNr_initial = svgInspect? -1 : 0;  // If 0, starts with empty VSM-box.
 
 
   // Creates demo vsm-dictionary data. Called at start & on toggling `useTweaks`.
-  function createDict() {
-    var dictData = demoDictData({ useTweaks });
+  function createDict(dictData) {
+    var dictData = dictData || demoDictData({ useTweaks });
     var options = Object.assign(
       dictData,
       ///{ delay: [20, 350] }  // Realistic delay. VsmDictionaryCacher can..
@@ -46,6 +46,8 @@
   var $el = document.getElementById .bind(document);
   var elVsmBox   = $el('vsmBox');
   var elWhBTgl   = $el('toggleWhiteBox');
+  var elNFtTgl   = $el('toggleNoFeet');
+  var elCreTgl   = $el('toggleCreateItem');
   var elImgScale = $el('inputImgScale');
   var elDlDelay  = $el('inputDlDelay');
   var elSVGBtn   = $el('buttonGetSVG');
@@ -169,19 +171,78 @@
 
 
   // Init checkbox for removing connectors' feet.
-  var el = $el('toggleNoFeet');
-  el.checked = !vsmBoxSizes.connFootVisible;
-  el.addEventListener('change', function() {
+  elNFtTgl.checked = !vsmBoxSizes.connFootVisible;
+  elNFtTgl.addEventListener('change', function() {
     updateVsmBoxSizes({ connFootVisible: !vsmBoxSizes.connFootVisible });
     setPureSVGText();
   });
 
 
+  // Init checkbox for toggling 'sketch' appearance.
+  var el = $el('toggleSketchBox');
+  el.checked = sketchBox;
+  elVsmBox.classList[sketchBox ? 'add' : 'remove']('sketchBox');
+  el.addEventListener('change', function() {
+    sketchBox = !sketchBox;
+    elVsmBox.classList.toggle('sketchBox');
+    setSketchBox(sketchBox, () => setPureSVGText());
+  });
+  setSketchBox(sketchBox);
+
+
+  function setSketchBox(b, cb = null) {
+    // If `b` is true: apply sketchBox style, else: reset to vsm-box defaults.
+    var n = !b;  // `n` stands for 'Normal' (=vsm-box-defaults) appearance.
+    var fp = x => n ? x : x * 1.1;                 // Pointers' scale factor.
+    var fl = x => n ? x : (typeof x != 'string') ? // Lines-related scale factor.
+      x * 1.3 :  x.split(' ').map(x => +x * 1.3).join(' ');
+    updateVsmBoxSizes({
+      defaultEditWidth:     n ? 80 : 40,
+      theConnsSpaceBelow:   n ?  3 :  1,
+      theConnsMarginBottom: n ?  2 :  0,  // 'Fake-margin' above TheTerms.
+      theConnsLevelHeight:  n ? 19 : 22,
+      connBackDepth:  n ?  6 :  6,  // Dist. betw. Conn-back and its level's top.
+      connFootDepth:  n ? 17 : 19,
+      connLineWidth:  n ?  1 :  1.2,
+      connTridRelW:    fp(3.9),
+      connTridRelH:    fp(6.9),
+      connTridObjW:    fp(3.5),
+      connTridObjH:    fp(4.72),
+      connListBackSep: fl(1.79),
+      connListRelW:    fp(3.2),
+      connListRelH:    fp(5.8),
+      connRefDashes:   fl('2 1'),
+      connRefParW:     fp(2.85),
+      connRefParH:     fp(4.5),
+      connBackColor: n ? '#7a7a7a' : '#000',
+      connLegColor:  n ? '#7a7a7a' : '#000',
+      connStubBackColor: n ? '#c3c3c3' : '#eee',
+      connStubLegColor:  n ? '#c3c3c3' : '#eee',
+      connStubFootColor: n ? '#cbcbcb' : '#f2f2f2',
+      connRIFGColor: [n ? '#aabcce' : 'transparent',  '#fff',  '#fff'],
+    });
+
+    // In sketchBox mode, use no dictionaries (=> clean/emptiest VSM-JSON).
+    elVsmBox.vsmDictionary = createDict(!b ? undefined :  {});
+
+    // When activating sketchBox mode: auto-apply whiteBox, hideFeet, create@ac.
+    // When deactivating it: only auto-unapply hideFeet.
+    setTimeout(() => {
+      if ( b && !elWhBTgl.checked)  elWhBTgl.click();
+      if ( b && !elNFtTgl.checked)  elNFtTgl.click();
+      if ( b && !elCreTgl.checked)  elCreTgl.click();
+      if (!b &&  elNFtTgl.checked)  elNFtTgl.click();
+      if (!b)  makeVsmBoxNarrower(elVsmBox);
+      if (cb)  cb();
+    }, 0);
+  }
+
+
+
   // Init checkbox for removing/adding the Create-Term item the autocomplete list.
-  el = $el('toggleCreateItem');
   elVsmBox.allowClassNull = allowClassNull_initial.toString();
-  el.checked = allowClassNull_initial;
-  el.addEventListener('change', function(ev) {
+  elCreTgl.checked = allowClassNull_initial;
+  elCreTgl.addEventListener('change', function(ev) {
     elVsmBox.allowClassNull = '' + !!ev.target.checked;
   });
 
@@ -342,7 +403,8 @@
     }
     button.onclick = function() {
       var nr = ~~this.id.replace(/[^\d]/g, '');
-      fillExample(nr);
+      var opt = nr ?  {} :  { focusAfter: true };  // Focus after 'Clear'.
+      fillExample(nr, opt);
     }
   }
   // Also remove any buttons that were added too many in HTML.
@@ -350,12 +412,12 @@
 
 
   // Fills an example in the VsmBox + the textarea, and shows a msg.
-  function fillExample(nr) {
+  function fillExample(nr, opt) {
     var data = getExample(nr);
     elVsmBox.initialValue = data;
     boxValueToStateText(data);
     setMsg(nr == 0 ? 'Cleared' : ('Example ' + nr));
-    makeVsmBoxNarrower(elVsmBox);
+    makeVsmBoxNarrower(elVsmBox, opt);
   }
 
   // Returns cloned data for an example. Returns the last example if `nr==-1`.
@@ -458,7 +520,8 @@
     delays.forEach(delay => setTimeout(() => {
       domToPureSVG(elVsmBox.querySelector('.vsm-box'),
         { whiteBox,
-          forDev : 1,
+          sketchBox,
+          forDev: 1,
           ...(svgInspect && { svgInspect: { elSVGFig, elSVGTxt, elSVGHtm } })
         }
       );
@@ -502,13 +565,14 @@
   setTimeout(() => {
     var a = [...document.getElementsByClassName('loading')];
     for (let el of a)  el.classList.remove('loading');
-
-    if (autofocus) {
-      var el = elVsmBox.querySelector('#vsmBox .term.edit.inp');
-      el && el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    }
+    if (autofocus)  focusVsmBox();
   }, 100);
 
+
+  function focusVsmBox() {
+    var el = elVsmBox.querySelector('#vsmBox .term.edit.inp');
+    el && el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  }
 
 
 
@@ -712,6 +776,7 @@
     if (opt.format == 'svg' && opt.pureSVG) {
       domToPureSVG(el, {
         whiteBox,
+        sketchBox,
         svgInspect,
         cb: s => {  // Behave async like `domtoimage[*]`.
           s = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);

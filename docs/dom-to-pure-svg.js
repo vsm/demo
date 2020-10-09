@@ -21,11 +21,17 @@ function domToPureSVG(e, opt) {
   }, 0);
 
 
+  const NotFade = ':not([class*="fade-leave"])';
+
+  const SketchBoxNums = {  // Some values used for sketchBox-styling CSS.
+    clw: 1.2,   // = 'conn-linewidth';
+    tbw: 1.35,  // = 'term-borderwidth';
+    dm : x => x.split(' ').map(x => round2(+x * 1.3)).join(' ') // =dash-multipl.
+  }
+
   /* // Prep for font embedding & subsetting. But embedding is not consistently..
   const FontDataTag = '<<FontData>>';  // ..supported across current browsers &..
   var usedChars = [];                  // ..SVG-editors. So: disabled for now. */
-
-  const NotFade = ':not([class*="fade-leave"])';
 
 
   var f = decorateFs( defineFs() );
@@ -68,11 +74,28 @@ function domToPureSVG(e, opt) {
       showRemoveIcon: true,       // False=>still added, but kept invisible.
       showTextCursor: false,      // False=>still added, but kept invisible.
       showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
-      borderW:        1,
-      termsH:         17,  // (Excludes the fake white padding on top, =part of conns panel).
-      termsMarginTop: 2,
-      refConnDashArray: '2,1',    // (Chrome:'2,1' |FF:'2,1'     |'2.5,1.25').
-      refTermDashArray: '2,1.5',  // (Chrome:'2,1' |FF:'2.5,2.5' |'2.5,1.25').
+      borderW:        1,          // vsmBox's border-width.
+      termsH:         17   + (!opt.sketchBox ? 0 : 3),  // (Excludes the fake..
+      //              // ..white padding on top, that is part of TheConns panel).
+      hRect:          14   + (!opt.sketchBox ? 0 : 3),
+      fontSize:       11   + (!opt.sketchBox ? 0 : 3),
+      txText:         3.5  + (!opt.sketchBox ? 0 : 0.3),
+      tyText:         11.3 + (!opt.sketchBox ? 0 : 2.3),  ///11.2
+      rxRect:         1.5  * (!opt.sketchBox ? 1 : 1.3),
+      termsMarginTop: !opt.sketchBox ? 2 : 0,
+      refConnDashArray: '2 1',   // (Chrome:'2 1' |FF:'2 1'     |'2.5 1.25').
+      refTermDashArray: '2 1.5', // (Chrome:'2 1' |FF:'2.5 2.5' |'2.5 1.25').
+      posFocalLine:   !opt.sketchBox ? {
+        x1:   1 + 1.4  ,  // } 1   = rect border-width. 2 = twice.
+        x2: - 2 - 1.4/2,  // } 1.7 = focal line stroke-width.
+        y1: 2,  y2: 2
+      } : {
+        x1: (  1 + 1.4  ) * 1,
+        x2: (- 2 - 1.4/2) * 1,
+        y1: 1.5,  y2: 1.5
+      },
+      posTextCursor: { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 +
+        (!opt.sketchBox ? 0 : 3) },
       connsFill:     whiteBox ? 'ffffff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
       termsFill:     'ffffff',                        ///(For debug: 'ffe2e2').
       addEndTerm:    !whiteBox || isEmptyBox || endTermText,
@@ -103,13 +126,14 @@ function domToPureSVG(e, opt) {
       o.contBB = calcBoundingBox(o);  // ("contBB"=content bounding-box).
 
       var bw2  = o.addBorder ?  o.borderW * 2 :  0;
-      var boxW = o.contBB.x2 - o.contBB.x1 + bw2;
-      var boxH = o.contBB.y2 - o.contBB.y1 + bw2;
+      var boxW = round2( o.contBB.x2 - o.contBB.x1 + bw2 );
+      var boxH = round2( o.contBB.y2 - o.contBB.y1 + bw2 );
       var tags = (o.useViewBox ? ` viewBox="0 0 ${ boxW } ${          boxH }"` :
                                  ` width="${       boxW }" height="${ boxH }"`);
 
       return [
         `<svg${tags} xmlns="http://www.w3.org/2000/svg">`,
+        `<desc>Created with https://vsm.github.io/demo</desc>`,
         ...indent(o, [
           f.style(o),  /// /* f.fontData(o), */
           f.box  (o)
@@ -124,17 +148,19 @@ function domToPureSVG(e, opt) {
       '</style>'
     ];
 
-    f.styleData = o => `
+
+    f.styleData = o => {
+      var s = `
      ${'rect, path, text { stroke: none; }'  /* For Inkscape-1.0.1's StrokeToPath */ }
         .box-border { stroke: #d3d9e5;  stroke-width: 1px;  fill: none; }
-     ${  o.whiteBox ? '' :
+     ${ o.whiteBox ? '' :
        '.conns-fill { fill: #' + o.connsFill + '; } ' +
        '.terms-fill { fill: #' + o.termsFill + '; }' }
         .foot       { stroke: #b6b6b6; }  .foot.stub  { stroke: #cbcbcb; }
         .back, .leg { stroke: #7a7a7a; }  .obj, .par  { stroke: #7a7a7a;  fill: none; }
         .rel,  .lis { fill:   #7a7a7a; }
-        .back.stub, .leg.stub, .obj.stub, .par.stub { stroke: #c3c3c3; }
-        .rel.stub   { fill:   #c3c3c3; }
+        .back.stub, .leg.stub, .obj.stub { stroke: #c3c3c3; }
+        .rel.stub                        { fill:   #c3c3c3; }
      ${  o.addUCConn ?
        '.obj.uc, .par.uc, .leg.uc { stroke: #2e48ff;  opacity: 0.56; }\n' +
        '.rel.uc, .lis.uc          { fill:   #2e48ff;  opacity: 0.56; }  ' +
@@ -156,7 +182,7 @@ function domToPureSVG(e, opt) {
         .r.lit.edit      { stroke: #e1c2c7;  }
         .r.edit, .r.ref-bord  { fill: none;  }
         .r.inst.end      { stroke: #f0f0f0;  }
-        .r.focal    { stroke: #aaaaaa;  stroke-dasharray: 0,3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
+        .r.focal    { stroke: #aaaaaa;  stroke-dasharray: 0 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
         .textcursor { stroke: #000000;  stroke-width: 1px; }
         .t          { font: 11px tahoma, sans-serif;  white-space: pre; }
         .t.inst, .t.ref { fill: #1c2a47; }
@@ -164,18 +190,45 @@ function domToPureSVG(e, opt) {
         .t.class        { fill: #2a2a05; }  .t.lit  { fill: #200505; }
         .mouse { stroke: #000000;  fill: #ffffff;  stroke-width: 0.5px; }
         .click { stroke: #000000;  fill: none;     stroke-width: 0.8px; }
-        .hide, .r.end.hide { stroke: none; fill: none; }
-      `.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
-    /*
+      `;
+
+      var _ = SketchBoxNums;
+      s += !o.sketchBox ? '' : `
+        /* sketch style */
+        .box-border { stroke: #d8d8d8; }
+        .back, .leg, .obj, .par { stroke: #000000;  stroke-width: ${_.clw}px; }
+        .rel,  .lis             { fill:   #000000; }
+        .back.stub, .leg.stub, .obj.stub { stroke: #eeeeee;  stroke-width: ${_.clw}px; }
+        .rel.stub                        { fill:   #eeeeee; }
+        .foot.stub  { stroke: #f2f2f2;  stroke-width: ${_.clw}px; }
+        .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${_.dm(o.refConnDashArray)}; }
+        .r.ref-bord { stroke-dasharray: ${_.dm(o.refTermDashArray)}; }
+        .r.focal    { stroke-dasharray: 0 4;  stroke-width: 2px; }
+        .r { stroke-width: ${_.tbw}px; }
+        .r.class, .r.lit { fill: none; }
+        .r.ref-bord { stroke: #000000; }
+        .t { font: 14px arial; }
+        .t.inst, .t.ref, .t.class, .t.lit { fill: #000000; }
+        .t.edit, .t.end { fill: #aaaaaa; }
+      `;
+
+      /* s += `
         @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
           src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/font/wine-tahoma.woff') format('woff'); }
         @font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;
           src: local('Tahoma Bold'), local('Verdana Bold'); }
-    */
+      `;  */
+
+      s += `
+        .hide, .r.end.hide { stroke: none; fill: none; }
+      `;
+
+      return s.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
+    },
+
 
     /*
-    f.fontData = o =>
-      FontDataTag;  // To be replaced with data for encountered glyphs.
+    f.fontData = o => FontDataTag; // Will be replaced w encountered-glyphs data.
     */
 
     f.box = o => {
@@ -207,7 +260,6 @@ function domToPureSVG(e, opt) {
         y: o.borderW/2,  h: o.contH + o.borderW });
 
     f.backgrounds = o => {
-      if (o.whiteBox)  return '';  // If whiteBox, don't draw background.
       var cut = {
         left  : o.contBB.x1,
         right : o.contW - o.contBB.x2,
@@ -286,7 +338,7 @@ function domToPureSVG(e, opt) {
     f.stubPointer = o => path(o, `${ pointerClassName(o.e) } stub`);
 
     f.removeIcon = o => {
-      var hide = o.showRemoveIcon ?  '' : ' hide';
+      var hide = o.showRemoveIcon && !o.sketchBox ?  '' : ' hide';
       return group(o, [
         f.riBg({ s: '.ri-bg',  hide }),
         f.riFg({ s: '.ri-fg',  hide }),
@@ -304,12 +356,10 @@ function domToPureSVG(e, opt) {
 
     f.terms = o => {
       var oPlus = {
-        s     : '.term:not(.ruler)' + (!o.addEndTerm ? ':not(.end)' : ''),
-        tx    : o.tx + 0.5,
-        ty    : o.ty + 0.5 + o.connsH,
-        txText: 3.5,
-        tyText: 11.3,  ///11.2
-        many  : true
+        s   : '.term:not(.ruler)' + (!o.addEndTerm ? ':not(.end)' : ''),
+        tx  : o.tx + 0.5,
+        ty  : o.ty + 0.5 + o.connsH,
+        many: true
       };
       // Prepare to possibly place a dragged term at its placeholder's position.
       var x = o.e.querySelector('.drag-placeholder');
@@ -328,17 +378,19 @@ function domToPureSVG(e, opt) {
       var c = type +
         (isEdit ? ' edit' : '') +
         (isEnd  ? ' end'  : '') +  (isEnd && !o.showEndTerm  ? ' hide'  : '');
-      var a = [
-        rect(o, `r ${c}`, { x,  y: '',  w: w - 1,  h: 14,  rx: 1.5 })
-      ];
+      var sRect = rect(o, `r ${c}`, { x,  y: '',  w: w - 1,  h: o.hRect,
+        rx: o.rxRect });
+      var a = [];
+      if (!o.sketchBox || ['class', 'lit'].includes(type) || isEdit) {
+        a.push(sRect);
+      }
       if (type == 'ref')  a.push(  // Extra element: for ref-term border.
-        a[0].replace(/\bref\b/, 'ref-bord')
+        sRect.replace(/\bref\b/, 'ref-bord')
       );
       if (isFocal) { // Extra element: for focal term.
-        a.push(line(o, 'r focal', {
-          x1: x     + 1 + 1.4  ,  // } 1   = rect border-width. 2 = twice.
-          x2: x + w - 2 - 1.4/2,  // } 1.4 = line stroke-width.
-          y1: 2,  y2: 2
+        a.push(line(o, 'r focal', { ...o.posFocalLine,
+          x1: x     + o.posFocalLine.x1,
+          x2: x + w + o.posFocalLine.x2,
         }));
       }
       if (o.e.querySelector('input')) {
@@ -348,8 +400,7 @@ function domToPureSVG(e, opt) {
     };
 
     f.textCursor = o =>
-      line(o,  `textcursor${ o.showTextCursor ?  '' : ' hide'}`,
-        { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 });
+      line(o,  `textcursor${ o.showTextCursor ?  '' : ' hide'}`, o.posTextCursor);
 
 
     f.termText = o => {
@@ -395,7 +446,7 @@ function domToPureSVG(e, opt) {
               b.push( !_.b && !_.i && !_.t && !dTot ?  p :
                 `<tspan${  _.b ?  ' font-weight="bold"'  :  ''
                 }${        _.i ?  ' font-style="italic"' :  ''
-                }${        _.t ?  ' font-size="' + round1(11*f) + '"' :  ''
+                }${        _.t ?  ' font-size="' + round1(o.fontSize*f)+'"' : ''
                 }${       dTot ?  ' dy="'        + round1(dTot) + '"' :  ''
                 }>${ p }</tspan>`
               );
@@ -612,8 +663,9 @@ function domToPureSVG(e, opt) {
     var y2 = [];  // top of terms + height of a termRect.
 
     var e = o.e;
-    var qTerms = e.querySelectorAll('.terms .term:not(.ruler):not(.drag)' +
-      (!o.addEndTerm ? ':not(.end)' : '') );  // (Includes .drag-placeholder).
+    var sTerms      = '.terms .term:not(.ruler):not(.drag)' +
+      (!o.addEndTerm ? ':not(.end)' : '');  // (Includes .drag-placeholder).
+    var qTerms      = e.querySelectorAll(sTerms);
     var qRIBG       = e.querySelector   (`.conn-remove-icon${NotFade} .ri-bg`);
     var qHLLegs     = e.querySelectorAll(`.conn-highlight${NotFade} .hl-leg`);
     var qConnBacks  = e.querySelectorAll(`.conn .back`);
@@ -622,11 +674,26 @@ function domToPureSVG(e, opt) {
     var posHL       = o.addUCConn && o.addPosHL &&
                       e.querySelector(`.pos-highlight${NotFade}`);
 
+
+    // If sketchBox style: adjust for extra conn-linewidth and term-borderwidth.
+    var connLinePlus = o.sketchBox ?  (SketchBoxNums.clw - 1) /2 :  0;
+
+    var termBorderPlus = el =>
+      !o.sketchBox ?  0 :     // Next line: 'Sketch-styled elem has border?':
+      classNames(el).filter(s => ['class', 'lit', 'ref', 'edit'].includes(s))
+        .length ?  (SketchBoxNums.tbw - 1) /2 :
+      -1;  // Also adjust for the absent default 1px border.
+
+    var anyTermBorderPlus = -1;
+
+
     qTerms.forEach(el => {
       var x = elStyleNum(el, 'left' );  if (x === undefined)  return;
-      x1.push(x);
+      var b = termBorderPlus(el);
+      anyTermBorderPlus = Math.max(anyTermBorderPlus, b);
+      x1.push(x - b);
       var w = elStyleNum(el, 'width');  if (w === undefined)  return;
-      x2.push(x + w);
+      x2.push(x + w + b);
     });
     qHLLegs.forEach(el => {
       var x = +el.getAttribute('x');
@@ -634,7 +701,7 @@ function domToPureSVG(e, opt) {
       x2.push(x + +el.getAttribute('width'));
     });
     qConnBacks.forEach(el => {
-      y1.push(+el.getAttribute('y1') - 0.5);
+      y1.push(+el.getAttribute('y1') - 0.5 - connLinePlus);
     });
 
     ucConnLegs.forEach(el => {
@@ -642,8 +709,8 @@ function domToPureSVG(e, opt) {
                     +el.getAttribute('y2') ];
     });
     ucConnBacks.forEach(el => {
-      y1 = [ ...y1, +el.getAttribute('y1') - 0.5,
-                    +el.getAttribute('y2') - 0.5 ];
+      y1 = [ ...y1, +el.getAttribute('y1') - 0.5 - connLinePlus,
+                    +el.getAttribute('y2') - 0.5 - connLinePlus ];
     });
     if (posHL) {  // If the pos-hl is drawn for an UC-conn: it reaches to y=0.
       var     x = +posHL.getAttribute('x');
@@ -653,14 +720,14 @@ function domToPureSVG(e, opt) {
     }
 
     if (qRIBG)  y1.push(+qRIBG.getAttribute('y'));
-    y1.push(o.contH - o.termsH);  // In case there are no conns.
+    y1.push(o.contH - o.termsH - anyTermBorderPlus);  // In case of no conns.
 
     var h = qTerms.item(0);
     h = (h && h.style.height && +h.style.height.replace('px', '')) || o.termsH;
-    y2.push(o.contH - o.termsH + h);
+    y2.push(o.contH - o.termsH + h + anyTermBorderPlus);
 
-    return { x1: Math.min(...x1), x2: Math.max(...x2),
-             y1: Math.min(...y1), y2: Math.max(...y2) };
+    return { x1: round2(Math.min(...x1)), x2: round2(Math.max(...x2)),
+             y1: round2(Math.min(...y1)), y2: round2(Math.max(...y2)) };
   }
 
 

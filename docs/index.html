@@ -91,7 +91,7 @@ body .hidden, .hidden { display: none; }
 
 #main { margin: 4px 0 50px 60px;  background: #fff; }
 
-#headBox { font-size: 12px;  line-height: 17.5px;  max-width: 800px;
+#headBox { font-size: 12px;  line-height: 18px;  max-width: 800px;
   margin: 5px 0 0 -4px;  border-radius: 1px;  background: #f8f8f8;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.16); }
 #headBoxWrap { resize: vertical;  overflow: hidden; display: inline-block;
@@ -100,7 +100,7 @@ body .hidden, .hidden { display: none; }
 .headSec { padding: 5px 6px; }
 .headSec:not(.intro) { border-top: 1px solid #ddd;
   padding-left: 15px;  padding-right: 15px; }
-.headSec.intro { padding-bottom: 7px;  lline-height: 17.5px; }
+.headSec.intro { padding-topp: 3px;  padding-bottom: 7px; }
 
 .headSec button { font-size: 13px;  color: #222; }
 
@@ -138,7 +138,7 @@ body .hidden, .hidden { display: none; }
 #buttonGetPNG { padding: 0 6px; }
 .figControls .number { width: 15px;  margin: 0 0 0 4px;  padding: 2px 2px 1px;
   border: 0.75px solid #b7b7b7;  font-size: 12.5px;  color: #424242; }
-.controlRow .info, .controlRow .info a { font-size: 10.5px;  line-height: 12px; }
+.controlRow .info, .controlRow .info a { font-size: 11px;  line-height: 12px; }
 
 .msg { color: #aaa;  font-size: 11px;  height: 12px;  text-align: right;
   margin: 0 0 2px 0; }
@@ -238,6 +238,32 @@ body .hidden, .hidden { display: none; }
 #vsmBox.whiteBox .vsm-box { border: 1px solid #fff; }
 
 
+/* For a 'sketch'-styled vsm-box.  |  FYI, some defaults from vsm-box:
+    .terms { padding: 0 2px 2px 2px; }
+    .term { padding: 0 3px;  margin: 0 2px; } */
+#vsmBox.sketchBox:not(.whiteBox) .vsm-box { border-color: #d8d8d8; }
+#vsmBox.sketchBox .vsm-box .terms { padding: 0 2px 2px; }
+#vsmBox.sketchBox .vsm-box .term { background: #fff;  border-width: 1.35px;
+  padding: 1px 3px 0;  margin: 0 2px;  border-radius: 2.6px; }
+#vsmBox.sketchBox .vsm-box .term,
+#vsmBox.sketchBox .vsm-box input.input,
+#vsmBox.sketchBox .vsm-box .placehold,
+#vsmBox.sketchBox .vsm-box .label-placehold { color: #000;  font: 14px arial;
+  line-height: 14px; }
+#vsmBox.sketchBox .vsm-box input.input { line-height: normal;  height: 15px; }
+#vsmBox.sketchBox .vsm-box .term.edit,
+#vsmBox.sketchBox .vsm-box .placehold,
+#vsmBox.sketchBox .vsm-box .label-placehold { color: #aaa; }
+#vsmBox.sketchBox .vsm-box .placehold.focus { font-size: 11px; }
+#vsmBox.sketchBox .vsm-box .focal:before { border-width: 2px;  top: -0.5px; }
+#vsmBox.sketchBox .vsm-box .term:not(.class):not(.lit):not(.ref):not(.edit) {
+  border-color: #fff; }
+#vsmBox.sketchBox .vsm-box .term:not(.class):not(.lit):not(.ref):not(.edit):hover {
+  border-color: #eee; }
+#vsmBox.sketchBox .vsm-box .term.ref:not(.edit) { border-color: #000; }
+
+
+
 /* To achieve pixel-precise alignment of vsmAC's TheList and the bottom of
    vsm-box on high-DPI screens: one could use a hard-coded _integer_ height
    for inputs:
@@ -278,22 +304,25 @@ body .hidden, .hidden { display: none; }
   <div id="main">
     <div id="headBoxWrap"><div id="headBox">
       <div class="headSec intro">
-        • <b class="emph">VSM</b> = an
+        • Below is a <b class="emph">VSM-box</b>,
+          and its <b class="emph">content as JSON</b> underneath.
+          &nbsp;|&nbsp;
+          <b class="emph">VSM</b> = an
           <b class="emph">intuitive semantic</b> model
           <b class="emph">+</b> a
           <b class="emph">user interface</b> to enable it.
         <br>
-        • Below is a <b class="emph">VSM-box</b> interface,
-        and its <b class="emph">content as JSON</b> underneath.
-        &nbsp;&thinsp;If you <b>edit</b> either, the other updates along.
+        • They are <b>linked</b>:
+          <b>edit</b> one and the other updates along.
         <br>
-        • The dictionaries linked here are just small demos,
-        &nbsp;but you can add new terms with "Create" in autocomplete.
+        • Here we use only small demo-dictionaries,
+          &thinsp;but you can add new terms with "Create" in autocomplete.
         <br>
         ◦ Also here:
         &nbsp;VSM <b>examples</b>,
         &nbsp;<b>image</b> export,
-        &nbsp;<b>RDF</b> conversion.
+        &nbsp;<b>RDF</b> conversion,
+        &nbsp;<b><a href="info.txt">more info</a></b>.
         <br>
         <div class="info">
           ◦ About <b>VSM</b>:
@@ -305,7 +334,6 @@ body .hidden, .hidden { display: none; }
           <a href="https://doi.org/10.20944/preprints202007.0486.v2">VSM</a>,
           <a href="https://doi.org/10.20944/preprints202007.0557.v1">vsm-box</a>.&nbsp;
           | $: <a href="https://github.com/sponsors/stcruy">sponsor VSM</a>.&nbsp;
-          | Demo: <b><a href="info.txt">more info</a></b>.
         </div>
       </div>
 
@@ -324,6 +352,7 @@ body .hidden, .hidden { display: none; }
         <div class="controlRow optionControls">
           <label ><input id="toggleWhiteBox"   type="checkbox">White box.</label
           ><label><input id="toggleNoFeet"     type="checkbox">Hide feet.</label
+          ><label><input id="toggleSketchBox"  type="checkbox">Sketch.</label
           ><label><input id="toggleCreateItem" type="checkbox"
             >Add 'Create' in autocomplete.</label
           ><label class="hidden"><input id="toggleUseTweaks"  type="checkbox"
@@ -343,8 +372,8 @@ body .hidden, .hidden { display: none; }
           &nbsp;delay<input   id="inputDlDelay"  class="number">s,
           &nbsp;<label><input id="toggleAutoWhiteBox" type="checkbox"
             >auto-white.</label>
-          <span class="info">For PNG: use Chrome.
-          &nbsp; For SVG➝EMF: <a href="svg-to-emf.txt"
+          &thinsp;<span class="info">For PNG: use Chrome.
+          &thinsp; SVG➝EMF: <a href="svg-to-emf.txt"
             >tips</a>.</span>
         </div>
       </div>
@@ -431,7 +460,7 @@ body .hidden, .hidden { display: none; }
       // Prevent possible flash of long text+scrollbars on page-reload;
       // and inform the user about the status.
       const loadingMsg  = 'Loading...';
-      const loadingMsg2 = '\nIf unpkg.com is slow, try hitting Refresh.';
+      const loadingMsg2 = '\nIf unpkg.com is slow, try hitting Reload.';
       $el('stateText').value = loadingMsg;
       $el('rdfText'  ).value = '';
       setTimeout(() => {

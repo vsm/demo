@@ -615,6 +615,22 @@ function vsmExamplesList(opt) {
         { type: 'R', pos: [ 5, 0 ] }
       ]
     }
+
+    /* // (Useful during the development of sketchBox-style SVG output).
+    ,{ terms: [
+        { str: 'a', classID: null, instID: null, parentID: null },
+        { str: 'h', classID: null, instID: null },
+        { str: 'p', classID: null, instID: null },
+        { str: 'i', classID: null, instID: null },
+        { str: 'w', classID: null, instID: null }
+      ],
+      conns: [
+        { type: 'T', pos: [ 0, 1, 2 ] },
+        { type: 'T', pos: [ 1, 3, 4 ] }
+      ]
+    }
+    /**/
+
   ];
 
   if (!opt.addTheTestExample)  vsmExamples.pop();  // Removes the test-example.

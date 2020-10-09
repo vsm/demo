@@ -1,15 +1,17 @@
-More info:
+More info on this demo:
 
 == JSON ==
-• This demo also enables you to paste VSM-JSON in the large textfield,
-  and see the corresponding VSM-sentence in the vsm-box above it.
+• You can for example paste VSM-JSON in the large textfield.
+  The linked vsm-box will then show the corresponding VSM-sentence.
+
+• You can also copy and store VSM-JSON (which changes along with any edit in the vsm-box),
+  for example if you design a VSM-template that you want to show later.
 
 
 == SVG ==
-• You can export a VSM-sentence to for example an SVG image:
-  a sharp, lightweight vector format.
+• You can export a VSM-sentence to for example an SVG image (a sharp, lightweight vector format).
 
-• If you set a `delay ..` for like 3 seconds, and then click the `Download SVG` button,
+• If you set a `delay ..` for e.g. 3 seconds and then click the `Download SVG` button,
   then you still have some time to go mouse-hover any connector you may want to see highlighted
   in the image, before the Save dialog appears.
 
@@ -42,7 +44,7 @@ More info:
   first hit Ctrl+Del in the input-field behind the last term. This makes it narrow.
 
 
-== For demos ==
+== For VSM demos ==
 • If you give a live demo or presentation, you can make the audience focus on just the vsm-box
   by moving the top information panel (and/or bottom JSON textarea) out of sight: use the
   whitespace-resizing handles, just above and below the right side of the JSON textfield.
