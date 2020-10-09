@@ -96,8 +96,8 @@ function domToPureSVG(e, opt) {
       },
       posTextCursor: { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 +
         (!opt.sketchBox ? 0 : 3) },
-      connsFill:     whiteBox ? 'ffffff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
-      termsFill:     'ffffff',                        ///(For debug: 'ffe2e2').
+      connsFill:     whiteBox ? 'fff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
+      termsFill:     'fff',                        ///(For debug: 'ffe2e2').
       addEndTerm:    !whiteBox || isEmptyBox || endTermText,
       showEndTerm:   !!(isEmptyBox || endTermText),
       tab: '',       // E.g. '  ' indents with two spaces per deeper level.
@@ -168,7 +168,7 @@ function domToPureSVG(e, opt) {
         .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${ o.refConnDashArray }; }
         .pos-hl, .hl-leg-under { fill: #f0f4fb; }
         .hl-back-top, .hl-leg  { fill: #e5e9fb; }
-        .ri-fg    { stroke: #aabcce;  stroke-width: 2px; }  .ri-fg.hl { stroke: #ffffff; }
+        .ri-fg    { stroke: #aabcce;  stroke-width: 2px; }  .ri-fg.hl { stroke: #fff; }
         .ri-bg    { fill: none;                          }  .ri-bg.hl { fill:   #7491ab; }
         .r.ref           { stroke: #e2e6f0;  fill: #e2e6f0; }
         .r.ref-bord      { stroke: #b1bed8;  stroke-dasharray: ${ o.refTermDashArray }; }
@@ -182,34 +182,34 @@ function domToPureSVG(e, opt) {
         .r.lit.edit      { stroke: #e1c2c7;  }
         .r.edit, .r.ref-bord  { fill: none;  }
         .r.inst.end      { stroke: #f0f0f0;  }
-        .r.focal    { stroke: #aaaaaa;  stroke-dasharray: 0.1 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
-        .textcursor { stroke: #000000;  stroke-width: 1px; }
+        .r.focal    { stroke: #aaa;  stroke-dasharray: 0.1 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
+        .textcursor { stroke: #000;  stroke-width: 1px; }
         .t          { font: 11px tahoma, sans-serif;  white-space: pre; }
         .t.inst, .t.ref { fill: #1c2a47; }
-        .t.edit, .t.end { fill: #7a7a7a; }  .t.plac { fill: #aaaaaa; }
+        .t.edit, .t.end { fill: #7a7a7a; }  .t.plac { fill: #aaa; }
         .t.class        { fill: #2a2a05; }  .t.lit  { fill: #200505; }
-        .mouse { stroke: #000000;  fill: #ffffff;  stroke-width: 0.5px; }
-        .click { stroke: #000000;  fill: none;     stroke-width: 0.8px; }
+        .mouse { stroke: #000;  fill: #fff;  stroke-width: 0.5px; }
+        .click { stroke: #000;  fill: none;  stroke-width: 0.8px; }
       `;
 
       var _ = SketchBoxNums;
       s += !o.sketchBox ? '' : `
-        /* sketch style */
+        /*sketch style*/
         .box-border { stroke: #d8d8d8; }
-        .back, .leg, .obj, .par { stroke: #000000;  stroke-width: ${_.clw}px; }
-        .rel,  .lis             { fill:   #000000; }
-        .back.stub, .leg.stub, .obj.stub { stroke: #eeeeee;  stroke-width: ${_.clw}px; }
-        .rel.stub                        { fill:   #eeeeee; }
+        .back, .leg, .obj, .par { stroke: #000;  stroke-width: ${_.clw}px; }
+        .rel,  .lis             { fill:   #000; }
+        .back.stub, .leg.stub, .obj.stub { stroke: #eee;  stroke-width: ${_.clw}px; }
+        .rel.stub                        { fill:   #eee; }
         .foot.stub  { stroke: #f2f2f2;  stroke-width: ${_.clw}px; }
         .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${_.dm(o.refConnDashArray)}; }
         .r.ref-bord { stroke-dasharray: ${_.dm(o.refTermDashArray)}; }
         .r.focal    { stroke-dasharray: 0.1 4;  stroke-width: 2px; }
         .r { stroke-width: ${_.tbw}px; }
         .r.class, .r.lit { fill: none; }
-        .r.ref-bord { stroke: #000000; }
+        .r.ref-bord { stroke: #000; }
         .t { font: 14px arial; }
-        .t.inst, .t.ref, .t.class, .t.lit { fill: #000000; }
-        .t.edit, .t.end { fill: #aaaaaa; }
+        .t.inst, .t.ref, .t.class, .t.lit { fill: #000; }
+        .t.edit, .t.end { fill: #aaa; }
       `;
 
       /* s += `
@@ -223,7 +223,9 @@ function domToPureSVG(e, opt) {
         .hide, .r.end.hide { stroke: none; fill: none; }
       `;
 
-      return s.trim() .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
+      return s.trim() .replace(/ *([\{\},;:]) */g, '$1')
+        .replace(/:0\./g, ':.')  .replace(/;\}/g, '}')
+        .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
     },
 
 
