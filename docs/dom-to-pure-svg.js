@@ -207,9 +207,9 @@ function domToPureSVG(e, opt) {
         .r { stroke-width: ${_.tbw}px; }
         .r.class, .r.lit { fill: none; }
         .r.ref-bord { stroke: #000; }
-        .t { font: 14px arial; }
+        .t { font: 14px arial;  text-anchor: middle; }
         .t.inst, .t.ref, .t.class, .t.lit { fill: #000; }
-        .t.edit, .t.end { fill: #aaa; }
+        .t.edit, .t.plac, .t.end { fill: #aaa;  text-anchor: start; }
       `;
 
       /* s += `
@@ -471,7 +471,12 @@ function domToPureSVG(e, opt) {
         }
       }
 
-      s = !s ?  '' :  text(o, `t ${c}`, { x,  w: w - 1 }) + s + '</text>';
+      w -= 1 + 2 * o.txText;  // Adjust for text-label padding.
+
+      if (o.sketchBox  &&     // Center sketchBox-styled text-labels.
+          !intersect(c.split(' '), ['edit', 'plac']) .length)  x += w / 2;
+
+      s = !s ?  '' :  text(o, `t ${c}`, { x,  w }) + s + '</text>';
       /* usedChars = [...usedChars, ...s.replace(/<.+?>/g,'').split('')]; */
 
       // Add newlines and indentation, without whitespace between tspans.
@@ -653,6 +658,7 @@ function domToPureSVG(e, opt) {
 
   function round1(num)  { return Math.round(num * 10 ) / 10 ; }
   function round2(num)  { return Math.round(num * 100) / 100; }
+  function intersect(a, b) { return a.filter(Set.prototype.has, new Set(b)); }
 
 
 
