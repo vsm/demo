@@ -243,8 +243,10 @@ body .hidden, .hidden { display: none; }
     .term { padding: 0 3px;  margin: 0 2px; } */
 #vsmBox.sketchBox:not(.whiteBox) .vsm-box { border-color: #d8d8d8; }
 #vsmBox.sketchBox .vsm-box .terms { padding: 0 2px 2px; }
-#vsmBox.sketchBox .vsm-box .term { background: #fff;  border-width: 1.35px;
-  padding: 1px 3px 0;  margin: 0 2px;  border-radius: 2.6px; }
+#vsmBox.sketchBox .vsm-box .term { border-width: 1.35px;  border-radius: 2.6px;
+  padding: 1px 3px 0; }
+#vsmBox.sketchBox .vsm-box .term:not(.drag-placeholder) { background: #fff;
+  margin: 0 2px; }
 #vsmBox.sketchBox .vsm-box .term,
 #vsmBox.sketchBox .vsm-box input.input,
 #vsmBox.sketchBox .vsm-box .placehold,
