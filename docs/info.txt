@@ -194,7 +194,7 @@ E.g. for an SVG embedded in a website, this prevents that the font might be subs
 
       REM Minimize. Some elements and many attrs added by Inkscape can be removed, because after outlining,
       REM only non-empty paths are visible (so no `d="M..V.."` lines) and only their `fill` attribute has an effect.
-      set ARGS=--pretty --indent=0 --quiet --precision=2 --multipass ^
+      set ARGS=--pretty --indent=0 --quiet --precision=3 --multipass ^
         --disable=removeDesc,mergePaths --enable=removeDimensions,cleanupListOfValues,inlineStyles,sortAttrs
       set CONFIG={ ""plugins"": [ ^
         { ""removeAttrs"": { ""attrs"": [ ^

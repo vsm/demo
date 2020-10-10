@@ -586,6 +586,7 @@
     // 3. Send a Ctrl+Del (to the input now at end-term) to make it narrow.
     // 4. Bring the input back to the term it was at originally.
     // 5. Unfocus it, if needed.
+    // 6. Scroll left, in case we put/focused an <input> outside browser window.
 
     opt = { focusAfter: false,  ...opt };
 
@@ -607,9 +608,11 @@
           e0 && !same && click(e0);         // 4.
           setTimeout(() => {
             !opt.focusAfter && (el = find('input')) && el && el.blur();  // 5.
+            window.scrollBy(  -1e5, 0);     // 6.
             setTimeout(() => {
+              window.scrollBy(-1e5, 0);     // 6. once more to be sure.
               cb && cb();
-            }, 1);
+            }, 200);
           }, 1);
         }, 1);
       }, 1);
