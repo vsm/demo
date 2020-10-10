@@ -184,11 +184,9 @@ E.g. for an SVG embedded in a website, this prevents that the font might be subs
       echo %~1 to outlines: %svg2%
       copy "%~1" "%svg2%" > nul
 
-      REM A preprocessing step in case the SVG was already saved by Illustrator: reset font name, and re-add `path{stroke:none;}`.
-      REM (Note: on *nix, this could be done with:
-      REM   sed -i "s/({font-family:)'(Arial)MT'(;})/$1$2$3/g" __.svg
-      REM   sed -i "s/(<\/style>)/path{stroke:none;}$1/g" __.svg       ).
-      call powershell -Command "& {[IO.File]::WriteAllText('%svg2%', ([IO.File]::ReadAllText('%svg2%') -replace \"({font-family:)'(Arial)MT'(;})\", '$1$2$3' -replace \"(\W/style\W)\", 'path{stroke:none;}$1'))};"
+      REM A preprocessing step in case the SVG was already saved by Illustrator: reset font names, and re-add `path{stroke:none;}` (necessary for Inkscape).
+      REM (Note: on *nix this could be done with commands like:  sed -i "s/(<\/style>)/path{stroke:none;}$1/g" __.svg  ).
+      call powershell -Command "& {[IO.File]::WriteAllText('%svg2%', ([IO.File]::ReadAllText('%svg2%') -replace \"({font-family:)'(Arial)MT'(;})\", '$1$2$3' -replace \"({font-family:)'(Arial)-BoldMT'(;})\", '$1$2;font-weight:bold$3' -replace \"(\W/style\W)\", 'path{stroke:none;}$1'))};"
 
       REM Make Inkscape convert text, lines etc. to filled paths.
       set VERBS=EditSelectAll; SelectionUnGroup; StrokeToPath; ObjectToPath; SelectionUnGroup; FitCanvasToSelection
