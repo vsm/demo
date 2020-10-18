@@ -91,8 +91,8 @@ Contents:
 
 How to convert SVG to EMF  (and avoid losing precision or font data):
 
-  + Note: You should have the font Tahoma installed (to properly see the SVG in the first place). (Or Arial for sketch-style).
-    On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma .
++ Note: You should have the font Tahoma installed (to see the SVG properly first). (Or Arial for sketch-style vsm-boxes).
+  On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
 
 
 ► Command line with Inkscape:
@@ -153,8 +153,11 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 
 Or: How to transform an SVG so that all its text and paths are converted to 'outlined' shapes.
 
-This maximizes the SVG's portability across platforms where required fonts may not always be installed.
-E.g. for an SVG embedded in a website, this prevents that the font might be substituted and the text misaligned.
++ Why: This maximizes the SVG's portability across platforms where required fonts may not always be installed.
+  E.g. for an SVG embedded in a website, this prevents that the font might be substituted and the text misaligned.
+
++ Note: You should have the font Tahoma installed (to convert the text into path data). (Or Arial for sketch-style vsm-boxes).
+  On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
 
 
 + This describes an automated procedure for conversion + minification using Inkscape and `svgo` (open-source SVG editor and optimizer, resp.).
@@ -165,9 +168,6 @@ E.g. for an SVG embedded in a website, this prevents that the font might be subs
 
   • Install `svgo` (see https://github.com/svg/svgo) with `npm` like:
     `npm install -g svgo@1.3.2`.
-
-  • You should have the font Tahoma installed (to properly see the SVG in the first place). (Or Arial for sketch-style).
-    + On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma .
 
   • Make a batch file that
     + processes   1 SVG file  if given as 1 argument, or
