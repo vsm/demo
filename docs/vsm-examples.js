@@ -625,16 +625,17 @@ function vsmExamplesList(opt) {
     // --- LAST = Test Example:  Demo with all VSM features, as a test.
     { terms: [
         { str: 'Test', classID: 'ex:123', instID: 'dbid45', //minWidth: 23,
+          //style: '<b><span style=\'color: red;\'>Abc</span></b>',
           queryOptions: { fixedTerms: [{ id:'PRS:0001' }, { id:'BIO:0010' }] },
           minWidth: 20, maxWidth: 80, editWidth: 55,
           placeholder: 'person'
         },
         { str: 'activates', classID: null, instID: null,
           isFocal: true },
-        { str: 'isβiuabcdefg', style: 'b1;i0-2;s1;u4;s5-11;s6-11;u7-11;u8-9',
+        { str: 'isβiuabcdef<&>g', style: 'b1;i0-2;s1;u4;s5-11;s6-11;u7-11;u8-9',
           classID: null, instID: null,
           queryOptions: { sort: { dictID: ['http://example.org/BIO'] } } },
-        { str: 'test jklm .', classID: null, instID: null, maxWidth: 37 },
+        { str: 'test jklmiii .', classID: null, instID: null, maxWidth: 37 },
         { str: 'with', classID: null, instID: null },
         { str: 'itself', classID: 'ex:123', instID: 'dbid50',
           parentID: 'dbid45' },

@@ -19,12 +19,13 @@
   var sketchBox            = false;
   var allowClassNull_initial  = true;
   var useTinyMinEndTermWidths = true;
-  var useTweaks = false;
-  var json5     = true;
-  var pureSVG   = true;
-  var showRDF   = false;
-  var imgScale  = 8;
-  var dlDelay   = 0;
+  var useTweaks  = false;
+  var json5      = true;
+  var pureSVG    = true;
+  var outlineSVG = true;
+  var showRDF    = false;
+  var imgScale   = 8;
+  var dlDelay    = 0;
   var keepSVGCursor = false;
   var autoWhiteBox  = true;
 
@@ -48,6 +49,7 @@
   var elWhBTgl   = $el('toggleWhiteBox');
   var elNFtTgl   = $el('toggleNoFeet');
   var elCreTgl   = $el('toggleCreateItem');
+  var elOuSTgl   = $el('toggleOutlineSVG');
   var elImgScale = $el('inputImgScale');
   var elDlDelay  = $el('inputDlDelay');
   var elSVGBtn   = $el('buttonGetSVG');
@@ -291,13 +293,33 @@
   // Init checkbox for toggling pure-SVG output vs. SVG with a 'foreignObject' node.
   el = $el('togglePureSVG');
   el.checked = pureSVG;
-  updateSvgBtn();
+  updateAfterPureSVGToggle();
   el.addEventListener('change', function() {
     pureSVG = !pureSVG;
-    updateSvgBtn();
+    updateAfterPureSVGToggle();
   });
-  function updateSvgBtn() {
+  function updateAfterPureSVGToggle() {
     elSVGBtn.classList[pureSVG ? 'add' : 'remove']('pureSVG');
+    elOuSTgl.disabled = !pureSVG;
+    $el('labelOutlineSVG').setAttribute('disabled', pureSVG ? '' : 'disabled');
+  }
+
+
+  // Init 'outline SVG', to write pure-SVGs with text etc. reliably as <path>s.
+  elOuSTgl.checked = outlineSVG;
+  elOuSTgl.addEventListener('change', function() {
+    outlineSVG = !outlineSVG;
+    setPureSVGText();
+  });
+
+  // Should be called before calling `domToPureSVG()`. Ensures to have attempted
+  // to load any necessary fonts (but not reload available ones). Then calls cb().
+  function ensureLoadFontsForSVG(cb) {
+    if (!pureSVG || !outlineSVG)  return setTimeout(cb, 0);
+    domToPureSVG.loadFontsForVsmBoxStyle(sketchBox ? 'sketch' : 'main', err => {
+      if (err)  console.log('Not all fonts could be loaded to outline SVG: ', err);
+      cb();
+    });
   }
 
 
@@ -517,15 +539,20 @@
     var delays = opt && opt.afterVsmBoxChange ?
       [0, vsmBoxInitialSizes.theConnsResortDelay + 10] : [0];
 
-    delays.forEach(delay => setTimeout(() => {
-      domToPureSVG(elVsmBox.querySelector('.vsm-box'),
-        { whiteBox,
-          sketchBox,
-          forDev: 1,
-          ...(svgInspect && { svgInspect: { elSVGFig, elSVGTxt, elSVGHtm } })
-        }
-      );
-    }, delay));
+    ensureLoadFontsForSVG(() => {
+      delays.forEach(delay => setTimeout(() => {
+        domToPureSVG(
+          elVsmBox.querySelector('.vsm-box'),
+          { whiteBox,
+            sketchBox,
+            outline: outlineSVG,
+            forDev: 1,
+            ...(svgInspect && { svgInspect: { elSVGFig, elSVGTxt, elSVGHtm } })
+          },
+          () => {}
+        );
+      }, delay));
+    });
   }
 
 
@@ -777,14 +804,19 @@
     var filename = opt.filename + '.' + ext;
 
     if (opt.format == 'svg' && opt.pureSVG) {
-      domToPureSVG(el, {
-        whiteBox,
-        sketchBox,
-        svgInspect,
-        cb: s => {  // Behave async like `domtoimage[*]`.
-          s = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
-          downloadUrl(s,  filename);
-        }
+      ensureLoadFontsForSVG(() => {
+        domToPureSVG(
+          el,
+          { whiteBox,
+            sketchBox,
+            outline: outlineSVG,
+            svgInspect: opt.svgInspect
+          },
+          s => {  // Behave async like `domtoimage[*]`.
+            s = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+            downloadUrl(s,  filename);
+          }
+        );
       });
     }
     else {

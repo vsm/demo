@@ -1,4 +1,4 @@
-More info on this demo:
+More info on the vsm-box Demo & Toolkit:
 
 Contents:
   1) JSON editing
@@ -8,79 +8,85 @@ Contents:
   5) Demoing
 
   A1) Appendix 1: Convert SVG TO EMF
-  A2) Appendix 2: Convert SVG to outlined SVG
+  A2) Appendix 2: Convert SVG to fully outlined, minified SVG
 
 
 
 1) == JSON editing ==
 
-• You can edit or for example paste VSM-JSON in the large textarea.
+• You can edit or paste VSM-JSON in the large textarea.
   The linked vsm-box will immediately show the corresponding VSM-sentence.
 
 • The VSM-JSON automatically updates along with any edits you make in the vsm-box.
-  After you entered a VSM-sentence, or perhaps designed a VSM-template,
-  you could copy this JSON, save it in a text file, and then be able to paste it back there later.
+  After you entered a VSM-sentence (or designed a VSM-template), you can for example
+  copy the JSON and save it in a text file, so you are able to paste it back there later.
 
 
 2) == Image output ==
 
 • You can export a VSM-sentence to either one of:
-  ◦ a PNG image (but this may easily become blurred when embedded in a PDF),
-  ◦ an SVG+html image (not recommended),
-  ◦ an 'pure' SVG image (a sharp, lightweight vector format, recommended).
+  ◦ a PNG image   (but it may become blurred when embedded in a PDF),
+                  (note: Chrome may produce better output than Firefox);
+  ◦ an SVG image  (a sharp, lightweight vector format):  as
+    - either SVG+html  (for full export but limited software support)    (not recommended),
+    - or 'pure' SVG    (standard export and maximum compatibility)  (Default, recommended).
 
-• If you set a `delay ..` for e.g. 3 seconds and then click the `Download SVG` button,
-  then you still have some time to go mouse-hover any connector you may want to see highlighted
-  in the image, before the Save dialog appears.
+• If you set a `delay ..` for e.g. 3 seconds and then click the `Download <type>` button,
+  then you still have some time to mouse-hover any connector you want to highlight in the image,
+  before the Save dialog appears.
 
 
 3) == Three styles: normal, white, sketch ==
 
-• Check the `✓ White box` option to remove the vsm-box border and background,
-  ◦ The `✓ auto-white` option automatically checks that option when you click Download.
-  ◦ Disable both `auto-white` and `White box` to create SVGs with vsm-box border and background.
+You can give the vsm-box three appearances in this demo:
 
-• Check the `✓ Sketch` option to apply a sketch-style appearance.
+• Normal:
+  ◦ Purpose:  to show a VSM-sentence as it appears in a vsm-box User Interface  (with border and background).
+  ◦ How:  this is the default initial appearance.
+  ◦ Note: to Download an image like this: disable both options `auto-white` and `White box`.  <-- !
 
-• Purpose of the three appearances:
-  ◦ Normal:    to show a VSM-sentence as how it appears inside a vsm-box user-interface.
-  ◦ White box: to focus on the VSM-sentence on its own.
-  ◦ Sketch:    to focus on the connector-structure, mainly.
+• White box:
+  ◦ Purpose:  to focus on a VSM-sentence on its own  (without vsm-box border and background).
+  ◦ How:  check `✓ White box`.
+  ◦ Note: a checked `✓ auto-white` option automatically enables `✓ White box` when you click Download,
+          so this is the default appearance for downloads.
+
+• Sketch:
+  ◦ Purpose:  to focus on the connector-structure mainly  (larger connectors, borderless terms).
+  ◦ How:  check `✓ Sketch`.
 
 
 4) == SVG tweaks ==
 
-• See Appendix 1 and 2 below for how to:
-  ◦ convert SVG to EMG properly (e.g. for Word or Google Docs), or
-  ◦ convert all text and paths to 'outlines' (e.g. for placing the SVG on a website,
-    and users may not have a necessary font installed).
-
-• The SVG includes *hidden elements* that can be made visible if needed. They are white or have 0% opacity:
-
+• The SVG includes some *hidden elements* to help you create nice figures:
   1. a text cursor:  in the empty VSM-term that last had the focus;
-  2. a mouse cursor and click-indicating stripes:  over the last leg of the highlighted connector, if any;
+  2. a mouse cursor and click-indicating stripes:  over the last leg of the highlighted connector (if any);
   3. a hover-highlighted version of a connector-highlighter's remove-icon.
 
-  ◦ To make these visible, it is easiest to:
-    Open the SVG in a text-editor, then find and replace:
-    1. `class="textcursor hide"` by `class="textcursor"` for the textcursor.
-    2. `class="mouse hide"`      by `class="mouse"`      for the mouse,
-       `class="click hide"`      by `class="click"`      for the click-stripes,
-    3. `class="ri-bg"`           by `class="ri-bg hl"`   and
-       `class="ri-fg"` (twice)   by `class="ri-fg hl"`   for the hovered remove-icon.
+  ◦ To make these visible, it is easiest to open the SVG in a text-editor
+    and change these class-attributes:
+    1. for text cursor:     "textcursor hide" to "textcursor",
+    2. mouse cursor:        "mouse hide"      to "mouse",
+       click-stripes:       "click hide"      to "click",
+    3. hovered remove-icon: "ri-bg"           to "ri-bg hl",
+       and 2x               "ri-fg"           to "ri-fg hl".
 
-• In order to generate an SVG that includes the input-field at the end of a vsm-box: first place
+• In order to generate an SVG that shows the input-field at the end of a vsm-box: first place
   some text in this input (use a space if it should be shown as empty), and then download the SVG.
 
-• If you dowload an SVG that includes the vsm-box border but the vsm-box has grown too wide:
-  first hit Ctrl+Del in the input-field behind the last term. This narrows it.
+• If you want to dowload an SVG that includes the vsm-box border but the vsm-box has grown too wide:
+  first hit Ctrl+Del in the input-field behind the last term. That narrows it.
+
+• See Appendix 1 and 2 below for:
+  ◦ how to convert SVG to EMG properly (e.g. to add it in Word or Google Docs), or
+  ◦ tips on the conversion of text and paths to 'outlines'.
 
 
 5) == Demoing ==
 
 • If you give a live demo or presentation on VSM, you can make the audience focus on just the vsm-box:
   you can move the top info panel and the bottom JSON textarea out of sight by using the
-  whitespace-resizing handles, just above and below the JSON textarea's right side.
+  whitespace-resizing handles. They are located just above and below the right side of the textarea.
 
 
 
@@ -91,8 +97,13 @@ Contents:
 
 How to convert SVG to EMF  (and avoid losing precision or font data):
 
-+ Note: You should have the font Tahoma installed (to see the SVG properly first). (Or Arial for sketch-style vsm-boxes).
-  On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
++ First it is important to:
+  + Either generate the SVG with the `✓ outline` option checked.
+      This converts text to <path> elements so you don't need a font.
+      Then if you place the SVG on a website, the correct image will still be visible to users who don't have a necessary font installed.
+  + Or make sure that you have the font Tahoma installed (or Arial for sketch-style vsm-boxes).
+      On Linux you can use the free, metric-compatible font Wine Tahoma:
+      It's at https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
 
 
 ► Command line with Inkscape:
@@ -129,7 +140,7 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 ► Or manually with Adobe Illustrator (this avoids Inkscape's white border):
 
   • Open SVG
-  • Select all,  Type   -> Create Outlines                       (converts font characters to path data)
+  • Select all,  Type   -> Create Outlines                       (converts font characters (if any) to path data)
   • Select all,  Object -> Expand Appearance                     (for shadows and effects, if applicable)
   • Select all,  Object -> Path -> Outline Stroke                (makes box-border not overlapped by content bkgr, and arrows positioned well)
   • Select all,  Object -> Transform -> Scale --> 800%  (|1600)  (prevents jagged text due to Illustrator cutting off small numbers' decimals)
@@ -141,7 +152,7 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
   • Insert --> Pictures
 
   • Finally, when converting to a PDF:
-    Make sure that your PDF converter generates vector data, not bitmaps.
+    Make sure that your PDF converter generates vector data, not bitmaps. <--- !
     E.g. via menu Acrobat -> Create PDF.  Also use e.g. 1200dpi.
     Then zoom in on the PDF to verify vector data.
 
@@ -149,15 +160,18 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 
 
 
-8) ===== Appendix 2:  Convert SVG to outlined SVG =====
+8) ===== Appendix 2:  Convert SVG to fully outlined, minified SVG =====
 
 Or: How to transform an SVG so that all its text and paths are converted to 'outlined' shapes.
 
++ Note that when you download an SVG with the `✓ outline` options checked,
+       then text will already be based on '<path>'s only (and need no external dependencies).
++ When that option is not checked, or if you want to convert everything in the SVG to <paths> only,
+       then the below describes how to proceed.
++ See also the intro of 'Appendix 1', above.
+
 + Why: This maximizes the SVG's portability across platforms where required fonts may not always be installed.
   E.g. for an SVG embedded in a website, this prevents that the font might be substituted and the text misaligned.
-
-+ Note: You should have the font Tahoma installed (to convert the text into path data). (Or Arial for sketch-style vsm-boxes).
-  On Linux you can use the free, metric-compatible font Wine Tahoma: https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
 
 
 + This describes an automated procedure for conversion + minification using Inkscape and `svgo` (open-source SVG editor and optimizer, resp.).
@@ -207,10 +221,9 @@ Or: How to transform an SVG so that all its text and paths are converted to 'out
       ] }
       call svgo %ARGS% --config="%CONFIG%" "%svg2%"
 
-      REM Convert CR+LF to LF, remove invisible paths, add a <style> to keep Inkscape emf-export work, and update `<desc>`.
-      call powershell -Command "& {[IO.File]::WriteAllText('%svg2%', ([IO.File]::ReadAllText('%svg2%') -replace \"`r`n\", \"`n\" -replace '\<path .*?fill="""none""".*?/\>', '' -replace \"`n`n\", \"`n\" -replace '(\<style)/\>', '$1>path{stroke:none}</style>' -replace \"`n(Created with https://vsm.github.io/demo)`n\", '$1 and its svg-outline script'))};"
+      REM Convert CR+LF to LF, remove invisible paths, and add a <style> so that Inkscape's EMF-export keeps working.
+      call powershell -Command "& {[IO.File]::WriteAllText('%svg2%', ([IO.File]::ReadAllText('%svg2%') -replace \"`r`n\", \"`n\" -replace '\<path .*?fill="""none""".*?/\>', '' -replace \"`n`n\", \"`n\" -replace '(\<style)/\>', '$1>path{stroke:none}</style>'))};"
 
       exit /b
 
   • Run it.
-

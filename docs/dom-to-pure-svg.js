@@ -11,14 +11,8 @@
  * - This code could be moved into a standalone module. Perhaps even linked to
  *   a headless browser generating the DOM-element; but that could be oversized.
  */
-function domToPureSVG(e, opt) {
+function domToPureSVG(e, opt, cb) {
   opt = opt || {};
-
-  // First, handle requests that want an async response.
-  if (opt.cb)  return setTimeout(() => {
-    var svg = domToPureSVG(e, { ...opt, cb: null });
-    opt.cb(svg);
-  }, 0);
 
 
   const NotFade = ':not([class*="fade-leave"])';
@@ -29,10 +23,6 @@ function domToPureSVG(e, opt) {
     dm : x => x.split(' ').map(x => round2(+x * 1.3)).join(' ') // =dash-multipl.
   }
 
-  /* // Prep for font embedding & subsetting. But embedding is not consistently..
-  const FontDataTag = '<<FontData>>';  // ..supported across current browsers &..
-  var usedChars = [];                  // ..SVG-editors. So: disabled for now. */
-
 
   var f = decorateFs( defineFs() );
 
@@ -40,10 +30,21 @@ function domToPureSVG(e, opt) {
   var s = f.main(o);
   if (o.tab == '')  s = s.replace(/<\/g>\n<g>/gm, '</g><g>');
 
-  s = fillDataTags(s);
-  dataInspect(s, e, o);
 
-  return s;
+  /* if (o.outline && window.SVGO) {  // (For if a 'svgo.min.js' is available).
+    return (new SVGO({  full: true,  precision: 2,
+      multipass: true,  js2svg: { pretty: true, indent: 0 },  plugins: [
+        { removeDesc: false }, { mergePaths: false }, { collapseGroups: false },
+        { convertShapeToPath: true }, { convertEllipseToCircle: true },
+        { cleanupListOfValues: true }, { inlineStyles:{onlyMatchedOnce: false}},
+        { convertPathData: { noSpaceAfterFlags: false } }, ///{sortAttrs: true},
+        { convertStyleToAttrs: true }, { removeDimensions: o.useViewBox } ]  })
+    ).optimize(s).then(res => { s = res.data;  dataInspect(s, e, o);  cb(s); });
+  } */
+
+
+  dataInspect(s, e, o);
+  cb(s);
 
 
 
@@ -74,6 +75,7 @@ function domToPureSVG(e, opt) {
       showRemoveIcon: true,       // False=>still added, but kept invisible.
       showTextCursor: false,      // False=>still added, but kept invisible.
       showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
+      outline:        true,       // Output text etc. as paths; if fonts loaded.
       borderW:        1,          // vsmBox's border-width.
       termsH:         17   + (!opt.sketchBox ? 0 : 3),  // (Excludes the fake..
       //              // ..white padding on top, that is part of TheConns panel).
@@ -135,7 +137,7 @@ function domToPureSVG(e, opt) {
         `<svg${tags} xmlns="http://www.w3.org/2000/svg">`,
         `<desc>Created with https://vsm.github.io/demo</desc>`,
         ...indent(o, [
-          f.style(o),  /// /* f.fontData(o), */
+          f.style(o),
           f.box  (o)
         ]),
         '</svg>'
@@ -214,7 +216,7 @@ function domToPureSVG(e, opt) {
 
       /* s += `
         @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
-          src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/font/wine-tahoma.woff') format('woff'); }
+          src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/bin/font/wine-tahoma.woff') format('woff'); }
         @font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;
           src: local('Tahoma Bold'), local('Verdana Bold'); }
       `;  */
@@ -228,10 +230,6 @@ function domToPureSVG(e, opt) {
         .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
     },
 
-
-    /*
-    f.fontData = o => FontDataTag; // Will be replaced w encountered-glyphs data.
-    */
 
     f.box = o => {
       var oPlus = {  // (This will be merged with `o` by the decorator).
@@ -370,7 +368,7 @@ function domToPureSVG(e, opt) {
     };
 
     f.term = o => group(o, [
-      f.termRect(o),
+      f.termRect(),
       f.termText( trp(o, o.txText, o.tyText) ),
     ]);
 
@@ -413,6 +411,15 @@ function domToPureSVG(e, opt) {
       if (!type || !w || x === undefined)  return '';
       var c = isEdit ? 'edit' :  isEnd ? 'end' :  type;
       var q, s;
+      var center =   // Boolean: to center sketchBox-styled text-labels.
+        o.sketchBox  &&  !intersect(c.split(' '), ['edit', 'plac']) .length;
+
+      var arr = [];  // Intermediary data-object. It will enable us to generate
+        // either <tspan>-elements or corresponding <path>-elements. Format:
+        // `{b:bold, i:italic, f:fontSize, dy:offsetY, s:stringPart}`.
+
+      w -= 1 + 2 * o.txText;  // Adjust for text-label padding.
+      x += center ?  w / 2 :  0;
 
       if ((q = o.e.querySelector('.label'))  &&  (s = q.innerHTML)) {
         if (classNames(q).includes('label-placehold'))  c = 'plac';
@@ -429,7 +436,6 @@ function domToPureSVG(e, opt) {
             dp: 0,  // The previous step's dy offset to the unstyled text base-..
                     // ..line. Note: each dy="" is relative to previous <tspan>!
           };
-          var b = [];  // Output-array.
           a.forEach(p => {
             if      (p.startsWith( '<b'  ))  _.b++; // Enter 1 level more bold.
             else if (p.startsWith('</b'  ))  _.b = Math.max(_.b - 1, 0);
@@ -448,42 +454,40 @@ function domToPureSVG(e, opt) {
               });
               d = round1(d);
               var dTot = -_.dp + d;  // Offset, relative to the previous tspan.
-              b.push( !_.b && !_.i && !_.t && !dTot ?  p :
-                `<tspan${  _.b ?  ' font-weight="bold"'  :  ''
-                }${        _.i ?  ' font-style="italic"' :  ''
-                }${        _.t ?  ' font-size="' + round1(o.fontSize*f)+'"' : ''
-                }${       dTot ?  ' dy="'        + round1(dTot) + '"' :  ''
-                }>${ p }</tspan>`
-              );
+              arr.push({
+                b : _.b,
+                i : _.i,
+                f : _.t  ? round1(o.fontSize*f) : o.fontSize,
+                dy: dTot ? round1(dTot) : 0,
+                s : p
+              });
               _.dp = d;
             }
           });
-          s = b.join('');
         }
+        else  arr.push({ s });
       }
 
       // If <input> with text, show that instead (corresp. to edit-terms' label).
       if (q = o.e.querySelector('input')) {
-        if (q.value)  s = q.value;
+        if (q.value) {
+          arr.push({ s: q.value });
+        }
         else if (q = o.e.querySelector('.placehold')) {
-          s = q.innerHTML;
+          arr.push({ s: q.innerHTML });
           c = 'plac';
         }
       }
 
-      w -= 1 + 2 * o.txText;  // Adjust for text-label padding.
+      // Html-decode the 'innerHTML' string, (e.g. '&amp;'->'&'), etc.
+      arr = arr.map(v => ({
+         dy: 0,  f: v.f || o.fontSize,  ...v,  s: htmlDecode(v.s || '')
+      }));
 
-      if (o.sketchBox  &&     // Center sketchBox-styled text-labels.
-          !intersect(c.split(' '), ['edit', 'plac']) .length)  x += w / 2;
-
-      s = !s ?  '' :  text(o, `t ${c}`, { x,  w }) + s + '</text>';
-      /* usedChars = [...usedChars, ...s.replace(/<.+?>/g,'').split('')]; */
-
-      // Add newlines and indentation, without whitespace between tspans.
-      s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
-
-      return s;
-    };
+      // If asked and possible: create <path>s; else: make or fallback to <text>.
+      return (o.outline  &&  textOutline(o, `t ${c}`, x, w, arr, center))
+        ||                   textPlain  (o, `t ${c}`, x, w, arr        );
+    }
 
 
     f.mouse = o => {
@@ -617,7 +621,7 @@ function domToPureSVG(e, opt) {
   function path(o, c, coos) {
     return shape('path', o, c, { d: '~', ...coos });
   }
-  function text(o, c, coos) {
+  function text(o, c, coos) {  // Only for non-styled text. Else use textPlain().
     return shape('text', o, c, { x: '~', y: '~', w: '~', ...coos } , '>');
   }
 
@@ -659,6 +663,106 @@ function domToPureSVG(e, opt) {
   function round1(num)  { return Math.round(num * 10 ) / 10 ; }
   function round2(num)  { return Math.round(num * 100) / 100; }
   function intersect(a, b) { return a.filter(Set.prototype.has, new Set(b)); }
+
+
+
+  // Generates not-outlined text: as a <text>-element, perhaps with <tspan>s,
+  // based on a data-object array `arr` as described in `f.termText()`.
+  function textPlain(o, c, x, w, arr) {
+    var s = '';
+
+    const enc = s => s .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;') .replace(/>/g, '&gt;');
+
+    if ( arr.length == 1)  s = enc(arr[0].s);
+    if ( arr.length  > 1)  s = arr
+      .map(v =>
+        `<tspan${  v.b ?                ` font-weight="bold"`  :  ''
+        }${        v.i ?                ` font-style="italic"` :  ''
+        }${        v.f != o.fontSize ?  ` font-size="${v.f}"`  :  ''
+        }${        v.dy ?               ` dy="${v.dy}"` :  ''
+        }>${ enc(v.s) }</tspan>`
+      )
+      .join('');
+
+    if (s)  s = text(o, c, { x,  w }) + s + '</text>';
+
+    // Add newlines and indentation, without whitespace between tspans.
+    s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
+    return s;
+  }
+
+
+
+  // Generates outlined text: as <path>s.  Returns `false` if not possible.
+  function textOutline(o, c, x0, wMax, arr, center) {
+    var lenTotal = arr.reduce((s, v) => s + v.s, '') .length;
+    if (!lenTotal)  return '';
+
+    wMax += 2;  // Against rounding errors that would trim too many terms.
+    var y0 = o.e.getAttribute('y');
+    var x = o.tx + x0;
+    var y = o.ty + y0;
+    var font;
+    var out = [];  // Output array.
+
+    var styleFonts = domToPureSVG.opentypeFonts[o.sketchBox ? 'sketch' : 'main'];
+    if (!styleFonts)  return false;
+
+    const Ell = '…';
+
+    const getFont = v => styleFonts[  // Gets the font for an `arr` item.
+      v.b ? (v.i ? 'bolditalic' : 'bold') : (v.i ? 'italic' : 'regular')];
+
+    const getTrimmedWidth = (len, tail = '') => { // (->false if missing a font).
+      var w = arr.reduce((w, v) => {
+        if (w === false || !(font = getFont(v)))  return false;
+        var s = v.s.substr(0, len);
+        len -= s.length;  // Use `len` as the nr of chars that can still be used.
+        return w + font.getAdvanceWidth(s, v.f);
+      }, 0);
+      return w === false ?  w === false :
+        w + styleFonts['regular'].getAdvanceWidth(tail, o.fontSize);
+    }
+
+    // Shorten the str (represented as parts) so it fits `wMax` width, if needed.
+    var len = lenTotal;
+    var addEllipsis = false;
+    var w = getTrimmedWidth(len);
+    if (w === false)  return false;
+    if (w > wMax) {
+      ///console.log(arr.reduce((s, v) => s + v.s, ''), w, wMax);
+      while (--len > 0  &&  getTrimmedWidth(len, Ell) > wMax) ;
+      addEllipsis = true;
+      len = Math.max(1, len);
+    }
+
+    // If centering, then move `x` back by text's half-width.
+    if (center) {
+      x = Math.max(0,  x - getTrimmedWidth(len, addEllipsis ? Ell : '') / 2);
+      ///x - (addEllipsis ? wMax : getTrimmedWidth(len)) / 2;  // (Alternative).
+    }
+
+    // Generate a <path> element for each string-fragment.
+    var s;
+    arr.forEach(v => {
+      if (!(font = getFont(v)))  out = false;
+      if (!out)  return;
+      if (!(s = v.s.substr(0, len)))  return;
+      len -= s.length;  // Use `len` as the nr of chars that can still be used.
+      y += v.dy;
+      var pth = font.getPath(s, x, y, v.f);
+      out.push( pth .toSVG(3) .replace(/^(<path)/, `$1 class="${c}"`) );
+      x += font.getAdvanceWidth(s, v.f);  // Move to after this text-path.
+    });
+
+    if (addEllipsis && out) {
+      out.push( font.getPath(Ell, x, o.ty + y0, o.fontSize) .toSVG(3)
+        .replace(/^(<path)/, `$1 class="${c}"`) );
+    }
+
+    return !out ?  false :  out.join('\n' + o.tab);
+  }
 
 
 
@@ -778,24 +882,9 @@ function domToPureSVG(e, opt) {
   }
 
 
-
-  function fillDataTags() {
-    /*
-    // Add font glyph data.
-    var glyphs = { 'a': '<glyph unicode="a" horiz-adv-x="..." d="..."/>', 'b': '' };
-    usedChars.push('.');  // Always support manually adding a '...'.
-    fontData = [
-      '<font horiz-adv-x="2048">',
-      '  <font-face font-family="Tahoma" units-per-em="2048"/>',
-      '  <missing-glyph horiz-adv-x="2048" d="M256,0l0,1536l1536,0l0,-1536M384,128l1280,0l0,1280l-1280,0z"/>',
-      '  _(to add here)_',
-      ...[...new Set(usedChars)] .sort() .map(c => `  ${ glyphs[c] || '' }`),
-      '</font>'
-    ] .filter(c => c.trim()) .join('\n  ');
-    s = s.replace(
-      `  ${ FontDataTag }\n`,  usedChars.length ?  `  ${ fontData }\n`  : '');
-    */
-    return s;
+  function htmlDecode(s) {
+    var doc = new DOMParser().parseFromString(s, 'text/html');
+    return doc.documentElement.textContent;
   }
 
 
@@ -851,3 +940,73 @@ function domToPureSVG(e, opt) {
     return formatted.substring(1, formatted.length - 2);
   }
 }
+
+
+
+
+
+// URLs for fonts that opentype.js can use for the different vsm-box styles.
+domToPureSVG.fontURLs = {
+  main: {
+    //'regular' : 'https://vsm.github.io/bin/font/wine-tahoma.woff',
+    'regular'   : 'https://vsm.github.io/bin/font/ta.woff',
+    'bold'      : 'https://vsm.github.io/bin/font/tab.woff',
+    'italic'    : 'https://vsm.github.io/bin/font/tai.woff',
+    'bolditalic': 'https://vsm.github.io/bin/font/tabi.woff'
+  },
+  sketch: {
+    'regular'   : 'https://vsm.github.io/bin/font/ar.woff',
+    'bold'      : 'https://vsm.github.io/bin/font/arb.woff',
+    'italic'    : 'https://vsm.github.io/bin/font/ari.woff',
+    'bolditalic': 'https://vsm.github.io/bin/font/arbi.woff'
+  }
+};
+
+
+// Calls to `....loadFontsForStyle()` (further below) will store opentype.js
+// font data in here, with the same keys as in `....fontURLs`.
+
+// This will store opentype.js font data (with same keys as in `....fontURLs`),
+// after calls to `....loadFontsForStyle()`, see below.
+// Then if available, `domToPureSVG()` will access this font data when needed.
+// + External code may empty this array again to release memory, if needed.
+domToPureSVG.opentypeFonts = {
+};
+
+
+// External code should call this function and wait for its callback, before
+// calling `domToPureSVG()` with the option `outline: true`.
+// This enables domToPureSVG() to create SVGs with 'outlined' text: as svg-paths.
+// It will only load a font it is not yet/still in `opentypeFonts`.
+// - Arg. `style`: load fonts for this vsm-box style: 'main' or 'sketch'.
+domToPureSVG.loadFontsForVsmBoxStyle = function(vstyle, cb) {  // cb(null|Array).
+  var cbAsync = errs => setTimeout(() => cb(errs), 0);
+
+  var vstyleURLs = domToPureSVG.fontURLs[vstyle];
+  if (!vstyleURLs)  return cbAsync('Unknown vsm-box style: ' + vstyle);
+
+  var vstyleFonts
+    = domToPureSVG.opentypeFonts[vstyle]
+    = domToPureSVG.opentypeFonts[vstyle] || {};
+
+  var errs = [];
+  var fsKeys = Object.keys(vstyleURLs);  // Font-style keys.
+  var remaining = fsKeys.length;
+  if (!remaining)  return cbAsync(null);
+
+  function cbMaybe(err) {
+    if (err)  errs.push(err);
+    if (!--remaining)  cbAsync(errs.length ? errs : null);
+  }
+
+  fsKeys.forEach(key => {
+    if (vstyleFonts[key])  return cbMaybe(null);  // If font already/still loaded.
+    var url = vstyleURLs[key];
+    opentype.load(url, (err, font) => {
+      ///console.log('opentype.load-cb', key, url);
+      if (err)  return cbMaybe(`Font could not be loaded: ${url}: ` + err);
+      vstyleFonts[key] = font;
+      cbMaybe(null);
+    });
+  });
+};
