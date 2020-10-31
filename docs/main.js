@@ -111,10 +111,10 @@
   elVsmBox.vsmDictionary = createDict();
   elVsmBox.queryOptions = {};
   elVsmBox.autofocus    = '' + autofocus;  // (See also much further below).
-  elVsmBox.placeholder  = 'Type here'; ///'Type a term or doubleclick for menu';
+  elVsmBox.placeholder  = 'Type or doubleclick here';
   elVsmBox.cycleOnTab   = 'true';
   elVsmBox.initialValue = vsmBoxInitialValue;  // We must assign either Objects..
-  elVsmBox.freshListDelay = '0';             // ..or Strings, to the attributes.
+  elVsmBox.freshListDelay = '0';             // ..or Strings to these attributes.
   updateVsmBoxSizes(vsmBoxInitialSizes);
 
   function updateVsmBoxSizes(sizes) {  // It detects change when given `new` Obj.
