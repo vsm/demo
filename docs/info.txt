@@ -211,7 +211,7 @@ Or: How to transform an SVG so all its text and paths are converted to 'outlined
         { ""removeAttrs"": { ""attrs"": [ ^
           ""path:d:M[ -]*[\\d\\.]+[ ,-]+[\\d\\.]+[ ]*[VvHhLl][ -]*[\\d\\.]+[ ,-]*[\\d\\.]*[ ]*[Zz]?"", ^
           ""*:style:*"", ""id"", ""aria-label"", ""font-family"", ""font-weight"", ""font-size"", ""font-style"", ^
-          ""overflow"", ""color"", ""stroke-width"", ""stroke-dasharray"", ""stroke-linecap"" ^
+          ""text-anchor"", ""overflow"", ""color"", ""stroke-width"", ""stroke-dasharray"", ""stroke-linecap"" ^
         ] } }, ^
         { ""inlineStyles"": { ""onlyMatchedOnce"": false } }, ^
         { ""convertPathData"": { ""noSpaceAfterFlags"": false } } ^
