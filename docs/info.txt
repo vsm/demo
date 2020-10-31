@@ -63,8 +63,7 @@ You can give the vsm-box three appearances in this demo:
   2. a mouse cursor and click-indicating stripes:  over the last leg of the highlighted connector (if any);
   3. a hover-highlighted version of a connector-highlighter's remove-icon.
 
-  ◦ To make these visible, it is easiest to open the SVG in a text-editor
-    and change these class-attributes:
+  ◦ To make these visible, it is easiest to open the SVG in a text-editor, and change these class-attributes:
     1. for text cursor:     "textcursor hide" to "textcursor",
     2. mouse cursor:        "mouse hide"      to "mouse",
        click-stripes:       "click hide"      to "click",
@@ -79,7 +78,7 @@ You can give the vsm-box three appearances in this demo:
 
 • See Appendix 1 and 2 below for:
   ◦ how to convert SVG to EMG properly (e.g. to add it in Word or Google Docs), or
-  ◦ tips on the conversion of text and paths to 'outlines'.
+  ◦ tips on converting text and paths to 'outlines'.
 
 
 5) == Demoing ==
@@ -92,21 +91,21 @@ You can give the vsm-box three appearances in this demo:
 
 
 
-6) ===== Appendix 1:  Convert SVG TO EMF =====
+A1) ===== Appendix 1:  Convert SVG TO EMF =====
 
 
 How to convert SVG to EMF  (and avoid losing precision or font data):
 
 + First it is important to:
   + Either generate the SVG with the `✓ outline` option checked.
-      This converts text to <path> elements so you don't need a font.
+      This converts text to <path> elements, so you are not dependent on a font.
       Then if you place the SVG on a website, the correct image will still be visible to users who don't have a necessary font installed.
   + Or make sure that you have the font Tahoma installed (or Arial for sketch-style vsm-boxes).
       On Linux you can use the free, metric-compatible font Wine Tahoma:
       It's at https://aur.archlinux.org/packages/ttf-tahoma (under 'Sources': link 'tahoma.ttf').
 
 
-► Command line with Inkscape:
+► Convert: Command line with Inkscape:
 
   • Install Inkscape from https://inkscape.org
     + On Windows, let Inkscape be added to the PATH. (Necessary for Inkscape 1.0.1).
@@ -132,12 +131,12 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
         del        "%~n1.tmp.svg"
       exit /b
 
-  + Note: A bug in Inkscape 1.0.1 adds a white border to the bottom-left of the exported EMF.
+  + Note: A bug in Inkscape 1.0.1 adds a white border to the bottom and right of the exported EMF.
   + Note: This one-liner may work in some future Inkspace version:
       inkscape "%~1" --actions="select-all; object-to-path; stroke-to-path; fit-canvas-to-selection" --export-type="emf"
 
 
-► Or manually with Adobe Illustrator (this avoids Inkscape's white border):
+► Or convert: Manually with Adobe Illustrator (this avoids Inkscape's white border):
 
   • Open SVG
   • Select all,  Type   -> Create Outlines                       (converts font characters (if any) to path data)
@@ -150,7 +149,6 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 
 ↪ Next, in Word:
   • Insert --> Pictures
-
   • Finally, when converting to a PDF:
     Make sure that your PDF converter generates vector data, not bitmaps. <--- !
     E.g. via menu Acrobat -> Create PDF.  Also use e.g. 1200dpi.
@@ -160,21 +158,20 @@ How to convert SVG to EMF  (and avoid losing precision or font data):
 
 
 
-8) ===== Appendix 2:  Convert SVG to fully outlined, minified SVG =====
+A2) ===== Appendix 2:  Convert SVG to fully outlined, minified SVG =====
 
-Or: How to transform an SVG so that all its text and paths are converted to 'outlined' shapes.
+Or: How to transform an SVG so all its text and paths are converted to 'outlined' shapes.
 
-+ Note that when you download an SVG with the `✓ outline` options checked,
-       then text will already be based on '<path>'s only (and need no external dependencies).
-+ When that option is not checked, or if you want to convert everything in the SVG to <paths> only,
-       then the below describes how to proceed.
++ Note that if you download an SVG with the `✓ outline` option checked,
+       the text will already be drawn with '<path>'s only (so without external font dependencies).
++ If that option is not checked, or if you want to convert everything else in the SVG to <paths> too, then see below.
 + See also the intro of 'Appendix 1', above.
 
-+ Why: This maximizes the SVG's portability across platforms where required fonts may not always be installed.
++ Why: This maximizes the SVG's portability across platforms, where required fonts may not always be installed.
   E.g. for an SVG embedded in a website, this prevents that the font might be substituted and the text misaligned.
 
 
-+ This describes an automated procedure for conversion + minification using Inkscape and `svgo` (open-source SVG editor and optimizer, resp.).
++ This describes an automated procedure for conversion + minification using Inkscape (free SVG editor) and `svgo` (SVG optimizer).
   This works (at least) with current `vsm-box demo` + Inkscape 1.0.1 + svgo 1.3.2, on Windows. (Linux should be doable similarly).
 
   • Install Inkscape from https://inkscape.org
