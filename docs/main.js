@@ -111,7 +111,7 @@
   elVsmBox.vsmDictionary = createDict();
   elVsmBox.queryOptions = {};
   elVsmBox.autofocus    = '' + autofocus;  // (See also much further below).
-  elVsmBox.placeholder  = 'Type or doubleclick here';
+  elVsmBox.placeholder  = 'Type here or dblclick';
   elVsmBox.cycleOnTab   = 'true';
   elVsmBox.initialValue = vsmBoxInitialValue;  // We must assign either Objects..
   elVsmBox.freshListDelay = '0';             // ..or Strings to these attributes.
