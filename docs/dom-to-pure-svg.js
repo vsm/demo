@@ -17,17 +17,14 @@ function domToPureSVG(e, opt, cb) {
 
   const NotFade = ':not([class*="fade-leave"])';
 
-  const SketchBoxNums = {  // Some values used for sketchBox-styling CSS.
-    clw: 1.2,   // = 'conn-linewidth';
-    tbw: 1.35,  // = 'term-borderwidth';
-    dm : x => x.split(' ').map(x => round2(+x * 1.3)).join(' ') // =dash-multipl.
-  }
-
 
   var f = decorateFs( defineFs() );
 
   var o = initOptions(e, opt);
+  var styleEntries = [];
+
   var s = f.main(o);
+  s     = fillStyleEntries(s);
   if (o.tab == '')  s = s.replace(/<\/g>\n<g>/gm, '</g><g>');
 
 
@@ -66,7 +63,7 @@ function domToPureSVG(e, opt, cb) {
       (e.querySelector('.terms .term.end .label') || {}) .innerHTML ||
       (e.querySelector('.terms .term.end input' ) || {}) .value;
     var whiteBox = !!opt.whiteBox;
-    return {
+    opt = {
       useViewBox:     !opt.forDev,  // Use viewbox vs. width/height in <svg> tag.
       whiteBox:       whiteBox,
       addBorder:      !whiteBox,  // False=>zero border (even if DOM has 1px).
@@ -77,16 +74,16 @@ function domToPureSVG(e, opt, cb) {
       showMouse:      0,          // 0:hidden; 1:visible; 2:visible +click-stripes.
       outline:        true,       // Output text etc. as paths; if fonts loaded.
       borderW:        1,          // vsmBox's border-width.
-      termsH:         17   + (!opt.sketchBox ? 0 : 3),  // (Excludes the fake..
+      termsH:         17   + (!opt.sketchBox ? 0 : 3  ),  // (Excludes the fake..
       //              // ..white padding on top, that is part of TheConns panel).
-      hRect:          14   + (!opt.sketchBox ? 0 : 3),
-      fontSize:       11   + (!opt.sketchBox ? 0 : 3),
+      hRect:          14   + (!opt.sketchBox ? 0 : 3  ),
+      fontSize:       11   + (!opt.sketchBox ? 0 : 3  ),
       txText:         3.5  + (!opt.sketchBox ? 0 : 0.3),
       tyText:         11.3 + (!opt.sketchBox ? 0 : 2.3),  ///11.2
       rxRect:         1.5  * (!opt.sketchBox ? 1 : 1.3),
       termsMarginTop: !opt.sketchBox ? 2 : 0,
-      refConnDashArray: '2 1',   // (Chrome:'2 1' |FF:'2 1'     |'2.5 1.25').
-      refTermDashArray: '2 1.5', // (Chrome:'2 1' |FF:'2.5 2.5' |'2.5 1.25').
+      refConnDashArray: [2, 1  ],  // (Chrome:2 1 |FF:2 1     |2.5 1.25).
+      refTermDashArray: [2, 1.5],  // (Chrome:2 1 |FF:2.5 2.5 |2.5 1.25).
       posFocalLine:   !opt.sketchBox ? {
         x1:   1 + 1.4  ,  // } 1   = rect border-width. 2 = twice.
         x2: - 2 - 1.4/2,  // } 1.7 = focal line stroke-width.
@@ -98,21 +95,159 @@ function domToPureSVG(e, opt, cb) {
       },
       posTextCursor: { x1: 0,  x2: 0,  y1: 1.5,  y2: 12.5 +
         (!opt.sketchBox ? 0 : 3) },
-      connsFill:     whiteBox ? 'fff' : 'fbfbfb',  ///(For debug: 'ffeeee':'fbfbfb').
-      termsFill:     'fff',                        ///(For debug: 'ffe2e2').
+      connLineWidth: 1 + (!opt.sketchBox ? 0 : 0.2 ),
+      termLineWidth: 1 + (!opt.sketchBox ? 0 : 0.35),
+      dashArrayMult: 1 + (!opt.sketchBox ? 0 : 0.3 ),  // Dash/gap-length multiplier.
+      connsFill:     whiteBox ? '#fff' : '#fbfbfb',  ///(For debug: '#ffeeee':'#fbfbfb').
+      termsFill:     '#fff',                         ///(For debug: '#ffe2e2').
       addEndTerm:    !whiteBox || isEmptyBox || endTermText,
       showEndTerm:   !!(isEmptyBox || endTermText),
-      tab: '',       // E.g. '  ' indents with two spaces per deeper level.
+      tab:           '',  // E.g. '  ' indents with two spaces per deeper level.
       ...opt,
       e
     };
+
+    opt.styleMaps = initStyleData(opt);
+    return opt;
+  }
+
+
+  /**
+   * This prepares for generating CSS-styling output that uses simple,
+   * single CSS-classes. (Esp. because LibreOffice can not process CSS-class
+   * combinations like '.r.inst'; it needs to be one class like '.r-inst').
+   *
+   * Here, most CSS-styling values are defined in `styleVals`, which
+   * are then used to populate a CSS-like data structure `styleMaps`, which
+   * `addStyleEntry()` will use to derive real CSS data (for the <style>-section)
+   * when asked to by `cssStr()` (which is called for each generated SVG-tag);
+   * afterwards, `fillStyleEntries()` will insert this data into <style></style>.
+   */
+  function initStyleData(o) {
+    var none = 'none';
+    var dashMult = arr => (arr||[]).map(v => round2(+v * o.dashArrayMult));
+    var styleVals = {
+      boxBord  : '#d3d9e5'  ,   boxBordLW: o.borderW,
+      connsFill: o.connsFill,   termsFill: o.termsFill,
+      connLW   : o.connLineWidth,  termLW: o.termLineWidth,
+      conn     : '#7a7a7a',  connFoot: '#b6b6b6',
+      stub     : '#c3c3c3',  stubFoot: '#cbcbcb',
+      uc       : '#2e48ff',  ucFoot  : '#e6e6e6',  ucOpac: '0.56',
+      refConnDA: dashMult(o.refConnDashArray),
+      refTermDA: dashMult(o.refTermDashArray),
+      hl       : '#e5e9fb',  hlLight: '#f0f4fb',
+      riFg     : '#aabcce',  riFgHl : '#fff',  riFgLW: 2,            // riFgPress: '#fff'   ,
+      riBgHl   : '#7491ab',                               // riBg: '',  riBgPress: '#446d9c',
+      refFill  : '#e2e6f0',  refBord: '#b1bed8',  refBordEdi: '#c4c4c4',  refText: '#1c2a47',
+      insFill  : '#e2e6f0',  insBord: '#b1bed8',  insBordEdi: '#c4c4c4',  insText: '#1c2a47',
+      clsFill  : '#f9f2b9',  clsBord: '#e5c547',  clsBordEdi: '#ebd262',  clsText: '#2a2a05',
+      litFill  : '#f0e2e6',  litBord: '#d8b1ba',  litBordEdi: '#e1c2c7',  litText: '#200505',
+      ediText  : '#7a7a7a',  plcText: '#aaa'   ,  insBordEnd: '#f0f0f0',
+      focal    : '#aaa'   ,  focalDA: [0.1, 3.4],  focalLW: 1.7,  focalLC: 'round',
+      termFont : `${ o.fontSize }px tahoma, sans-serif`,
+      termTA   : '',  ediTextTA: ''
+    }
+
+    if (o.sketchBox) {
+      Object.assign(styleVals, {
+        boxBord : '#d8d8d8',
+        conn    : '#000',
+        stub    : '#eee',  stubFoot: '#f2f2f2',
+        refFill : none,  refBord: '#000'   ,  refText: '#000',
+        insFill : none,  insBord: none     ,  insText: '#000',  ediText: '#aaa',
+        clsFill : none,  clsBord: '#e5c547',  clsText: '#000',
+        litFill : none,  litBord: '#d8b1ba',  litText: '#000',
+        focalDA : [0.1, 4],  focalLW: 2,
+        termFont: `${ o.fontSize }px arial`,  termTA: 'middle'
+      });
+    }
+
+    var _ = styleVals;
+
+    var styleMaps = [
+      { t: 'rect',         v: { stroke:   none } },  // Makes Inkscape-1.0.1's..
+      { t: 'path',         v: { stroke:   none } },  // ..StrokeToPath..
+      { t: 'text',         v: { stroke:   none } },  // ..not draw black borders.
+      { c: 'box-border',   v: { stroke: _.boxBord, 'stroke-width': _.boxBordLW, fill: none } },
+      { c: 'conns-fill',   v: { fill  : _.connsFill } },
+      { c: 'terms-fill',   v: { fill  : _.termsFill } },
+      { c: 'foot',         v: { stroke: _.connFoot, 'stroke-width': _.connLW } },
+      { c: 'foot stub',    v: { stroke: _.stubFoot, 'stroke-width': _.connLW } },
+      { c: 'back',         v: { stroke: _.conn, 'stroke-width': _.connLW } },
+      { c: 'leg',          v: { stroke: _.conn, 'stroke-width': _.connLW } },
+      { c: 'obj',          v: { stroke: _.conn, 'stroke-width': _.connLW, fill: none } },
+      { c: 'par',          v: { stroke: _.conn, 'stroke-width': _.connLW, fill: none } },
+      { c: 'rel',          v: { fill  : _.conn, 'stroke-width': _.connLW } },
+      { c: 'lis',          v: { fill  : _.conn, 'stroke-width': _.connLW } },
+      { c: 'back stub',    v: { stroke: _.stub } },
+      { c: 'leg stub',     v: { stroke: _.stub } },
+      { c: 'obj stub',     v: { stroke: _.stub } },
+      { c: 'rel stub',     v: { fill  : _.stub } },
+      { c: 'uc',           v: { opacity: _.ucOpac } },
+      { c: 'obj uc',       v: { stroke: _.uc } },
+      { c: 'par uc',       v: { stroke: _.uc } },
+      { c: 'leg uc',       v: { stroke: _.uc } },
+      { c: 'rel uc',       v: { fill  : _.uc } },
+      { c: 'lis uc',       v: { fill  : _.uc } },
+      { c: 'foot uc',      v: { stroke: _.ucFoot, opacity: '' } },
+      { c: 'back ref',     v: { 'stroke-dasharray': _.refConnDA } },
+      { c: 'leg ref',      v: { 'stroke-dasharray': _.refConnDA } },
+      { c: 'foot ref',     v: { 'stroke-dasharray': _.refConnDA } },
+      { c: 'pos-hl',       v: { fill  : _.hlLight } },
+      { c: 'hl-leg-under', v: { fill  : _.hlLight } },
+      { c: 'hl-back-top',  v: { fill  : _.hl } },
+      { c: 'hl-leg',       v: { fill  : _.hl } },
+      { c: 'ri-fg',        v: { stroke: _.riFg, 'stroke-width': _.riFgLW } },
+      { c: 'ri-fg hl',     v: { stroke: _.riFgHl } },
+      { c: 'ri-bg',        v: { fill  :   none } },
+      { c: 'ri-bg hl',     v: { fill  : _.riBgHl } },
+      { c: 'r',            v: { 'stroke-width': _.termLW } },
+      { c: 'r ref',        v: { stroke: _.refFill, fill: _.refFill } },
+      { c: 'r ref-bord',   v: { stroke: _.refBord, fill:   none, 'stroke-dasharray': _.refTermDA } },
+      { c: 'r ref-bord edit',v:{stroke: _.refBordEdi } },
+      { c: 'r inst',       v: { stroke: _.insBord, fill: _.insFill } },
+      { c: 'r inst edit',  v: { stroke: _.insBordEdi } },
+      { c: 'r class',      v: { stroke: _.clsBord, fill: _.clsFill } },
+      { c: 'r class edit', v: { stroke: _.clsBordEdi } },
+      { c: 'r lit',        v: { stroke: _.litBord, fill: _.litFill } },
+      { c: 'r lit edit',   v: { stroke: _.litBordEdi } },
+      { c: 'r edit',       v: { fill  :   none } },
+      { c: 'r ref edit',   v: { stroke:   none } },
+      { c: 'r inst end',   v: { stroke: _.insBordEnd } },
+      { c: 'r focal',      v: { stroke: _.focal, 'stroke-dasharray': _.focalDA,
+                                'stroke-width': _.focalLW, 'stroke-linecap': _.focalLC } },
+      { c: 'tt',           v: { font  : _.termFont , 'white-space': 'pre', 'text-anchor': _.termTA } },
+      { c: 'tt ref',       v: { fill  : _.refText } },
+      { c: 'tt inst',      v: { fill  : _.insText } },
+      { c: 'tt class',     v: { fill  : _.clsText } },
+      { c: 'tt lit',       v: { fill  : _.litText } },
+      { c: 'tt plac',      v: { fill  : _.plcText, 'text-anchor': _.ediTextTA } },
+      { c: 'tt edit',      v: { fill  : _.ediText, 'text-anchor': _.ediTextTA } },
+      { c: 'tt end',       v: { fill  : _.ediText } },
+      { c: 't ref',        v: { fill  : _.refText } },
+      { c: 't inst',       v: { fill  : _.insText } },
+      { c: 't class',      v: { fill  : _.clsText } },
+      { c: 't lit',        v: { fill  : _.litText } },
+      { c: 't plac',       v: { fill  : _.plcText } },
+      { c: 't edit',       v: { fill  : _.ediText } },
+      { c: 't end',        v: { fill  : _.ediText } },
+      { c: 'textcursor',   v: { stroke: '#000', 'stroke-width': 1 } },
+      { c: 'mouse',        v: { stroke: '#000', fill: '#fff', 'stroke-width': 0.5 } },
+      { c: 'click',        v: { stroke: '#000', fill: none  , 'stroke-width': 0.8 } },
+      { c: 'hide',         v: { stroke: none  , fill: none  , 'stroke-width': '' } },
+    ];
+
+    // Convert all `c`'s into Arrays (for easy calculation later).
+    styleMaps.forEach(o => o.c && ( o.c = o.c.split(' ') ));
+
+    return styleMaps;
   }
 
 
 
   // - Define many functions that each generate a part of the SVG structure,
   //   and/or delegate parts to other functions. They can return String|Array.
-  // - And then AUGMENT them with a decorator function.
+  // - These will still be AUGMENTed with the decorator function `decorateFs()`.
   function defineFs() {
     var f = {};
 
@@ -144,91 +279,8 @@ function domToPureSVG(e, opt, cb) {
       ];
     };
 
-    f.style = o => [
-      '<style>',
-      indent(o, f.styleData(o)),
-      '</style>'
-    ];
 
-
-    f.styleData = o => {
-      var s = `
-     ${'rect, path, text { stroke: none; }'  /* For Inkscape-1.0.1's StrokeToPath */ }
-        .box-border { stroke: #d3d9e5;  stroke-width: 1px;  fill: none; }
-     ${ o.whiteBox ? '' :
-       '.conns-fill { fill: #' + o.connsFill + '; } ' +
-       '.terms-fill { fill: #' + o.termsFill + '; }' }
-        .foot       { stroke: #b6b6b6; }  .foot.stub  { stroke: #cbcbcb; }
-        .back, .leg { stroke: #7a7a7a; }  .obj, .par  { stroke: #7a7a7a;  fill: none; }
-        .rel,  .lis { fill:   #7a7a7a; }
-        .back.stub, .leg.stub, .obj.stub { stroke: #c3c3c3; }
-        .rel.stub                        { fill:   #c3c3c3; }
-     ${  o.addUCConn ?
-       '.obj.uc, .par.uc, .leg.uc { stroke: #2e48ff;  opacity: 0.56; }\n' +
-       '.rel.uc, .lis.uc          { fill:   #2e48ff;  opacity: 0.56; }  ' +
-       '.foot.uc         { stroke: #e6e6e6; }  ' : '' }
-        .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${ o.refConnDashArray }; }
-        .pos-hl, .hl-leg-under { fill: #f0f4fb; }
-        .hl-back-top, .hl-leg  { fill: #e5e9fb; }
-        .ri-fg    { stroke: #aabcce;  stroke-width: 2px; }  .ri-fg.hl { stroke: #fff; }
-        .ri-bg    { fill: none;                          }  .ri-bg.hl { fill:   #7491ab; }
-        .r.ref           { stroke: #e2e6f0;  fill: #e2e6f0; }
-        .r.ref-bord      { stroke: #b1bed8;  stroke-dasharray: ${ o.refTermDashArray }; }
-        .r.ref.edit      { stroke: none;     }
-        .r.inst          { stroke: #b1bed8;  fill: #e2e6f0; }
-        .r.inst.edit, ${ ''
-      } .r.ref-bord.edit { stroke: #c4c4c4;  }
-        .r.class         { stroke: #e5c547;  fill: #f9f2b9; }
-        .r.class.edit    { stroke: #ebd262;  }
-        .r.lit           { stroke: #d8b1ba;  fill: #f0e2e6; }
-        .r.lit.edit      { stroke: #e1c2c7;  }
-        .r.edit, .r.ref-bord  { fill: none;  }
-        .r.inst.end      { stroke: #f0f0f0;  }
-        .r.focal    { stroke: #aaa;  stroke-dasharray: 0.1 3.4;  stroke-width: 1.7px;  stroke-linecap: round; }
-        .textcursor { stroke: #000;  stroke-width: 1px; }
-        .t          { font: 11px tahoma, sans-serif;  white-space: pre; }
-        .t.inst, .t.ref { fill: #1c2a47; }
-        .t.edit, .t.end { fill: #7a7a7a; }  .t.plac { fill: #aaa; }
-        .t.class        { fill: #2a2a05; }  .t.lit  { fill: #200505; }
-        .mouse { stroke: #000;  fill: #fff;  stroke-width: 0.5px; }
-        .click { stroke: #000;  fill: none;  stroke-width: 0.8px; }
-      `;
-
-      var _ = SketchBoxNums;
-      s += !o.sketchBox ? '' : `
-        /*sketch style*/
-        .box-border { stroke: #d8d8d8; }
-        .back, .leg, .obj, .par { stroke: #000;  stroke-width: ${_.clw}px; }
-        .rel,  .lis             { fill:   #000; }
-        .back.stub, .leg.stub, .obj.stub { stroke: #eee;  stroke-width: ${_.clw}px; }
-        .rel.stub                        { fill:   #eee; }
-        .foot.stub  { stroke: #f2f2f2;  stroke-width: ${_.clw}px; }
-        .back.ref, .leg.ref, .foot.ref { stroke-dasharray: ${_.dm(o.refConnDashArray)}; }
-        .r.ref-bord { stroke-dasharray: ${_.dm(o.refTermDashArray)}; }
-        .r.focal    { stroke-dasharray: 0.1 4;  stroke-width: 2px; }
-        .r { stroke-width: ${_.tbw}px; }
-        .r.class, .r.lit { fill: none; }
-        .r.ref-bord { stroke: #000; }
-        .t { font: 14px arial;  text-anchor: middle; }
-        .t.inst, .t.ref, .t.class, .t.lit { fill: #000; }
-        .t.edit, .t.plac, .t.end { fill: #aaa;  text-anchor: start; }
-      `;
-
-      /* s += `
-        @font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;
-          src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/bin/font/wine-tahoma.woff') format('woff'); }
-        @font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;
-          src: local('Tahoma Bold'), local('Verdana Bold'); }
-      `;  */
-
-      s += `
-        .hide, .r.end.hide { stroke: none; fill: none; }
-      `;
-
-      return s.trim() .replace(/ *([\{\},;:]) */g, '$1')
-        .replace(/:0\./g, ':.')  .replace(/;\}/g, '}')
-        .split(/\r?\n\s*/g) .map(s => s.replace(/ {2,}/g, ' '));
-    },
+    f.style = o => '<style></style>',  // (Will be filled in at the end).
 
 
     f.box = o => {
@@ -378,18 +430,18 @@ function domToPureSVG(e, opt, cb) {
       var c = type +
         (isEdit ? ' edit' : '') +
         (isEnd  ? ' end'  : '') +  (isEnd && !o.showEndTerm  ? ' hide'  : '');
-      var sRect = rect(o, `r ${c}`, { x,  y: '',  w: w - 1,  h: o.hRect,
-        rx: o.rxRect });
+      var coos = { x,  y: '',  w: w - 1,  h: o.hRect, rx: o.rxRect };
       var a = [];
       if (
         !(type == 'ref'  &&  isEdit)  &&
         (!o.sketchBox  ||  ['class', 'lit'].includes(type)  ||  isEdit)
       ) {
-        a.push(sRect);
+        a.push(rect(o, `r ${c}`, coos));
       }
-      if (type == 'ref')  a.push(  // Extra element: for ref-term border.
-        sRect.replace(/\bref\b/, 'ref-bord')
-      );
+      if (type == 'ref') {  // Extra element: for ref-term border.
+        // (Note: calling `rect()` again also adds a `styleEntries` elem. for it).
+        a.push(rect(o, `r ${ c.replace(/\bref\b/, 'ref-bord') }`, coos));
+      }
       if (isFocal) { // Extra element: for focal term.
         a.push(line(o, 'r focal', { ...o.posFocalLine,
           x1: x     + o.posFocalLine.x1,
@@ -479,14 +531,14 @@ function domToPureSVG(e, opt, cb) {
         }
       }
 
-      // Html-decode the 'innerHTML' string, (e.g. '&amp;'->'&'), etc.
-      arr = arr.map(v => ({
+      // Upgrade all `arr` elements: html-decode the 'innerHTML' string (e.g. ..
+      arr = arr.map(v => ({                          // .. '&amp;' -> '&'), etc.
          dy: 0,  f: v.f || o.fontSize,  ...v,  s: htmlDecode(v.s || '')
       }));
 
       // If asked and possible: create <path>s; else: make or fallback to <text>.
-      return (o.outline  &&  textOutline(o, `t ${c}`, x, w, arr, center))
-        ||                   textPlain  (o, `t ${c}`, x, w, arr        );
+      return (o.outline  &&  textOutline(o, `t ${ c}`, x, w, arr, center))
+        ||                   textPlain  (o, `tt ${c}`, x, w, arr        );
     }
 
 
@@ -593,6 +645,12 @@ function domToPureSVG(e, opt, cb) {
       .map(s => o.tab + s.replace(/\n/g, '\n' + o.tab));
   }
 
+  function intersect(a, b) { return a.filter(Set.prototype.has, new Set(b)); }
+
+  function round1(num)  { return Math.round(num * 10 ) / 10 ; }
+  function round2(num)  { return Math.round(num * 100) / 100; }
+
+
   // Puts the svg code in Array|Str `a` in a '<g>...</g>' group, and indents it.
   function group(o, a) {
     a = makeProperTagArray(a);
@@ -607,22 +665,6 @@ function domToPureSVG(e, opt, cb) {
   // "Translate-plus": adds offset for deeper level, to offset of current level.
   function trp(o, x, y) {
     return { tx: o.tx + x,  ty: o.ty + y };
-  }
-
-
-  // Shorthands for shape()-calls. And for needed but absent `coos`-properties:
-  // it makes shape() fetch their values from `e`'s attributes.
-  function rect(o, c, coos) {
-    return shape('rect', o, c, {  x:'~',  y:'~',  w:'~',  h:'~', ...coos });
-  }
-  function line(o, c, coos) {
-    return shape('line', o, c, { x1:'~', y1:'~', x2:'~', y2:'~', ...coos });
-  }
-  function path(o, c, coos) {
-    return shape('path', o, c, { d: '~', ...coos });
-  }
-  function text(o, c, coos) {  // Only for non-styled text. Else use textPlain().
-    return shape('text', o, c, { x: '~', y: '~', w: '~', ...coos } , '>');
   }
 
 
@@ -656,14 +698,22 @@ function domToPureSVG(e, opt, cb) {
         return `${ k }="${ v }"`;
       })
       .join(' ');
-    return `<${ tagName } class="${ classNames }" ${ coosStr }${ end || '/>' }`;
+    return `<${ tagName } ${ cssStr(o, tagName, classNames) } ${ coosStr }${
+      end || '/>' }`;
   }
 
 
-  function round1(num)  { return Math.round(num * 10 ) / 10 ; }
-  function round2(num)  { return Math.round(num * 100) / 100; }
-  function intersect(a, b) { return a.filter(Set.prototype.has, new Set(b)); }
-
+  // Shorthands for shape()-calls. And for needed but absent `coos`-properties:
+  // it makes shape() fetch their values from `e`'s attributes.
+  function rect(o, c, coos) {
+    return shape('rect', o, c, {  x:'~',  y:'~',  w:'~',  h:'~', ...coos });
+  }
+  function line(o, c, coos) {
+    return shape('line', o, c, { x1:'~', y1:'~', x2:'~', y2:'~', ...coos });
+  }
+  function path(o, c, coos) {
+    return shape('path', o, c, { d: '~', ...coos });
+  }
 
 
   // Generates not-outlined text: as a <text>-element, perhaps with <tspan>s,
@@ -685,7 +735,7 @@ function domToPureSVG(e, opt, cb) {
       )
       .join('');
 
-    if (s)  s = text(o, c, { x,  w }) + s + '</text>';
+    if (s)  s = shape('text', o, c, { x, y: '~', w } , '>') + s + '</text>';
 
     // Add newlines and indentation, without whitespace between tspans.
     s = s .replace(/>([^<]*)<tspan /g, `\n${ o.tab }>$1<tspan `);
@@ -699,10 +749,10 @@ function domToPureSVG(e, opt, cb) {
     var lenTotal = arr.reduce((s, v) => s + v.s, '') .length;
     if (!lenTotal)  return '';
 
-    wMax += 2;  // Against rounding errors that would trim too many terms.
+    wMax += 2;  // Against rounding errors that 'd prune (+ellipsis) too often.
     var y0 = o.e.getAttribute('y');
-    var x = o.tx + x0;
-    var y = o.ty + y0;
+    var x = x0 + o.tx;
+    var y = y0 + o.ty;
     var font;
     var out = [];  // Output array.
 
@@ -714,7 +764,7 @@ function domToPureSVG(e, opt, cb) {
     const getFont = v => styleFonts[  // Gets the font for an `arr` item.
       v.b ? (v.i ? 'bolditalic' : 'bold') : (v.i ? 'italic' : 'regular')];
 
-    const getTrimmedWidth = (len, tail = '') => { // (->false if missing a font).
+    const getPrunedWidth = (len, tail = '') => {  // (->false if missing a font).
       var w = arr.reduce((w, v) => {
         if (w === false || !(font = getFont(v)))  return false;
         var s = v.s.substr(0, len);
@@ -728,40 +778,141 @@ function domToPureSVG(e, opt, cb) {
     // Shorten the str (represented as parts) so it fits `wMax` width, if needed.
     var len = lenTotal;
     var addEllipsis = false;
-    var w = getTrimmedWidth(len);
+    var w = getPrunedWidth(len);
     if (w === false)  return false;
     if (w > wMax) {
       ///console.log(arr.reduce((s, v) => s + v.s, ''), w, wMax);
-      while (--len > 0  &&  getTrimmedWidth(len, Ell) > wMax) ;
+      while (--len > 0  &&  getPrunedWidth(len, Ell) > wMax) ;
       addEllipsis = true;
       len = Math.max(1, len);
     }
 
     // If centering, then move `x` back by text's half-width.
     if (center) {
-      x = Math.max(0,  x - getTrimmedWidth(len, addEllipsis ? Ell : '') / 2);
-      ///x - (addEllipsis ? wMax : getTrimmedWidth(len)) / 2;  // (Alternative).
+      x = Math.max(0,  x - getPrunedWidth(len, addEllipsis ? Ell : '') / 2);
+      ///x - (addEllipsis ? wMax : getPrunedWidth(len)) / 2;  // (Alternative).
     }
 
     // Generate a <path> element for each string-fragment.
     var s;
+    const insertCSS = s => s.replace(/^(<path\b)/, '$1 ' + cssStr(o, 'path', c));
     arr.forEach(v => {
       if (!(font = getFont(v)))  out = false;
       if (!out)  return;
       if (!(s = v.s.substr(0, len)))  return;
       len -= s.length;  // Use `len` as the nr of chars that can still be used.
       y += v.dy;
-      var pth = font.getPath(s, x, y, v.f);
-      out.push( pth .toSVG(3) .replace(/^(<path)/, `$1 class="${c}"`) );
+      out.push( insertCSS( font.getPath(s, x, y, v.f) .toSVG(3) ) );
       x += font.getAdvanceWidth(s, v.f);  // Move to after this text-path.
     });
 
     if (addEllipsis && out) {
-      out.push( font.getPath(Ell, x, o.ty + y0, o.fontSize) .toSVG(3)
-        .replace(/^(<path)/, `$1 class="${c}"`) );
+      out.push(insertCSS( font.getPath(Ell, x, y0 + o.ty, o.fontSize).toSVG(3) ));
     }
 
     return !out ?  false :  out.join('\n' + o.tab);
+  }
+
+
+
+  function cssStr(o, tagName, classStr) {  // Args: e.g. `(o, 'rect', 'r inst')`.
+    var classKey = addStyleEntry(o, tagName, classStr);
+    return `class="${ classKey }"`;
+  }
+
+
+  /**
+   * If `styleEntries` does not yet contain this, then:
+   * - Calculates the CSS-styling for tagName & classStr (e.g. 'rect' & 'r inst')
+   *     by merging relevant styles from `o.styleMaps`; and
+   * - Adds this to `styleEntries` as an entry `{ classKey, styleStr }`
+   *     so this can be inserted in the <style>-section, later.
+   */
+  function addStyleEntry(o, tagName, classStr) {
+    var classKey = classStr.replace(/ /g, '-');
+
+    // 0) If we already made a <style>-section entry for this `classKey`: done.
+    if (styleEntries.findIndex(o => o.classKey==classKey) >= 0)  return classKey;
+
+    // 1) Collect all relevant styling:
+    // For each styleMaps-object (`smo`) (in order of appearance):
+    // if the given tagName corresponds to smo's `t`-string (if present),
+    // and the given classStr includes all css-classes in smo's `c[]` (if any),
+    // then writes (or overwrites with) smo's `v`'s properties into `styleObj`.
+    var classArr = classStr.split(' ');
+    var styleObj = o.styleMaps.reduce((ans, smo) =>
+      Object.assign(ans,
+        (!smo.t || tagName == smo.t) &&
+        (!smo.c || smo.c.every(s => classArr.includes(s))) ?
+        smo.v : {}
+      ), {});
+
+    // 2) Eliminate empty and default values, etc.
+    var a = Object.keys(styleObj)
+      .map(k => ({ k,  v: styleObj[k] }))  // ==> [{ k: cssKey, v: value }, ...].
+      .filter(e =>
+        e.v  &&
+        !(e.k == 'stroke-width'  &&  e.v == 1)
+      )
+      .map(e =>
+        e.k == 'stroke-dasharray' ?  { ...e,  v: e.v.join(' ') } :
+        e.k == 'stroke-width'     ?  { ...e,  v: e.v + 'px'    } :  e
+      );
+
+    // 3) Improve output readability: sort by key, ordered as in `sortKeys`.
+    var sortKeys = [ 'fill', 'stroke', 'stroke-width', 'stroke-dasharray',
+      'stroke-linecap', 'opacity', 'font', 'white-space', 'text-anchor' ];
+    a = a.sort((e, f) =>
+      (sortKeys.indexOf(e.k) + 1 || sortKeys.length + 1) -  // And if absent,..
+      (sortKeys.indexOf(f.k) + 1 || sortKeys.length + 1)    // ..move to end.
+    );
+
+    // 4) Add the final CSS-styling in an entry to `styleEntries`.
+    var styleStr = a .map(e => `${e.k}:${e.v}`) .join(';');
+    styleEntries.push({ classKey, styleStr });
+
+
+    // 5) If 'hide' is in classStr: add a <style> entry for without it too;
+    // and if 'ri-fg/bg' is in classStr: add an entry with 'hl' added too.
+    // This enables users to easily switch to these extra styles by manually
+    // changing a 'class="..."' in the SVG file (e.g. by removing '-hide').
+    if (classArr.includes('hide')) {
+      addStyleEntry(o, tagName, classArr.filter(s => s != 'hide').join(' ') );
+    }
+    else if ( intersect(classArr, ['ri-fg', 'ri-bg']).length &&
+             !classArr.includes('hl') ) {
+      addStyleEntry(o, tagName, classStr + ' hl');
+    }
+
+    return classKey;
+  }
+
+
+
+  /**
+   * Fills an SVG-string's '<style>'-section with accumulated `styleEntries[]`.
+   * Also groups the keys of entries that have the same `styleStr`.
+   */
+  function fillStyleEntries(s) {
+    var a = styleEntries
+      .reduce((a, e) => {
+        var g = a.find(f => e.styleStr == f.styleStr);
+        if (!g)  a.push(e);
+        else  g.classKey += ',.' + e.classKey;
+        return a;
+      }, [])
+      .map(e =>
+        `.${e.classKey}{${e.styleStr}}`
+      )
+      /* .concat([
+        `@font-face { font-family: 'Tahoma';  font-weight: normal;  font-style: normal;  ` +
+          `src: local('Tahoma'),  local('WineTahoma'),  url('https://vsm.github.io/bin/font/wine-tahoma.woff') format('woff'); }`,
+        `@font-face { font-family: 'Tahoma';  font-weight: bold;  font-style: normal;  ` +
+          `src: local('Tahoma Bold'), local('Verdana Bold'); }`]) */;
+
+    return s.replace(/(\n(\s*)<style>)(<\/style>\n)/,  !a.length ?  '' :
+      ('$1\n$2' + o.tab + a.join('\n$2' + o.tab) + '\n$2$3')
+    );
   }
 
 
@@ -791,12 +942,12 @@ function domToPureSVG(e, opt, cb) {
 
 
     // If sketchBox style: adjust for extra conn-linewidth and term-borderwidth.
-    var connLinePlus = o.sketchBox ?  (SketchBoxNums.clw - 1) /2 :  0;
+    var connLinePlus = o.sketchBox ?  (o.connLineWidth - 1) /2 :  0;
 
     var termBorderPlus = el =>
       !o.sketchBox ?  0 :     // Next line: 'Sketch-styled elem has border?':
       classNames(el).filter(s => ['class', 'lit', 'ref', 'edit'].includes(s))
-        .length ?  (SketchBoxNums.tbw - 1) /2 :
+        .length ?  (o.termLineWidth - 1) /2 :
       -1;  // Also adjust for the absent default 1px border.
 
     var anyTermBorderPlus = -1;
@@ -883,8 +1034,13 @@ function domToPureSVG(e, opt, cb) {
 
 
   function htmlDecode(s) {
+    // Prepare to counteract parseFromString+textContent's trimming effect.
+    var spaceLead  = s.replace(/^(\s*).*$/, '$1');
+    var spaceTrail = s.replace(/^.*?(\s*)$/, '$1');
+    var s = s.trim();  // Just in case those two stop trimming in the future.
+
     var doc = new DOMParser().parseFromString(s, 'text/html');
-    return doc.documentElement.textContent;
+    return spaceLead + doc.documentElement.textContent + spaceTrail;
   }
 
 

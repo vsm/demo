@@ -64,11 +64,11 @@ You can give the vsm-box three appearances in this demo:
   3. a hover-highlighted version of a connector-highlighter's remove-icon.
 
   ◦ To make these visible, it is easiest to open the SVG in a text-editor, and change these class-attributes:
-    1. for text cursor:     "textcursor hide" to "textcursor",
-    2. mouse cursor:        "mouse hide"      to "mouse",
-       click-stripes:       "click hide"      to "click",
-    3. hovered remove-icon: "ri-bg"           to "ri-bg hl",
-       and 2x               "ri-fg"           to "ri-fg hl".
+    1. for text cursor:     "textcursor-hide" to "textcursor",
+    2. mouse cursor:        "mouse-hide"      to "mouse",
+       click-stripes:       "click-hide"      to "click",
+    3. hovered remove-icon: "ri-bg"           to "ri-bg-hl",
+       and 2x               "ri-fg"           to "ri-fg-hl".
 
 • In order to generate an SVG that shows the input-field at the end of a vsm-box: first place
   some text in this input (use a space if it should be shown as empty), and then download the SVG.
