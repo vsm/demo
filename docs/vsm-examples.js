@@ -566,6 +566,48 @@ function vsmExamplesList(opt) {
       ]
     },
 
+    // --- Covid-19
+    { terms: [
+        { str: 'Apelin',          classID: 'https://www.uniprot.org/uniprot/Q9ULZ1', instID: null },
+        { str: 'or',              classID: null, instID: null },
+        { str: 'its',             classID: null, instID: null },
+        { str: 'receptor',        classID: null, instID: null },
+        { str: 'agonists',        classID: null, instID: null },
+        { str: 'are',             classID: null, instID: null },
+        { str: 'potential',       classID: null, instID: null },
+        { str: 'treatment',       classID: null, instID: null },
+        { str: 'for',             classID: null, instID: null },
+        { str: 'COVID-19',        classID: 'http://purl.obolibrary.org/obo/DOID_0080600', instID: null },
+        { str: 'through',         classID: 'http://purl.bioontology.org/ontology/SNOMEDCT/278109006', instID: null },
+        { str: 'suppressing',     classID: null, instID: null },
+        { str: 'ACE',             classID: 'https://www.uniprot.org/uniprot/P12821', instID: null },
+        { str: 'and',             classID: null, instID: null },
+        { str: 'Ang-II',          classID: 'https://www.uniprot.org/uniprot/P50052', instID: null },
+        { str: 'production',      classID: null, instID: null },
+        { str: 'down-regulating', classID: null, instID: null },
+        { str: 'AT1R',            classID: 'https://www.uniprot.org/uniprot/P30556', instID: null },
+        { str: 'and',             classID: null, instID: null },
+        { str: 'up-regulating',   classID: null, instID: null },
+        { str: 'ACE2',            classID: 'https://www.uniprot.org/uniprot/Q9BYF1', instID: null }
+      ],
+      conns: [
+        { type: 'T', pos: [ 3, -1, 2 ] },
+        { type: 'T', pos: [ 4, -1, 3 ] },
+        { type: 'L', pos: [ 1, 0, 4 ] },
+        { type: 'R', pos: [ 2, 0 ] },
+        { type: 'T', pos: [ 7, -1, 6 ] },
+        { type: 'T', pos: [ 7, 8, 9 ] },
+        { type: 'T', pos: [ 1, 5, 7 ] },
+        { type: 'L', pos: [ 13, 12, 14 ] },
+        { type: 'T', pos: [ -1, 15, 13 ] },
+        { type: 'T', pos: [ -1, 11, 15 ] },
+        { type: 'T', pos: [ -1, 16, 17 ] },
+        { type: 'T', pos: [ -1, 19, 20 ] },
+        { type: 'L', pos: [ 18, 11, 16, 19 ] },
+        { type: 'T', pos: [ 5, 10, 18 ] }
+      ]
+    },
+
     // --- Ecology
     ...[]  ||
     { terms: [
