@@ -544,10 +544,12 @@
 
   function updatePermaLink(text = '') {
     //var hide = !text || text.replace(/\s/g, '') == '{terms:[],conns:[]}';
-    hide = false;  // Even show permalink when empty.
+    hide = false;  // Show permalink even if vsm-box is empty.
     classCond(elPLinkW, hide, 'hidden');
-    elPLink.href = '?vsm=' + encodeURIComponent(text)
-      ///.replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16));
+
+    var usp = new URLSearchParams();
+    usp.append('vsm', text);
+    elPLink.href = '?' + usp.toString();
   }
 
 
@@ -565,7 +567,7 @@
         usp.delete('vsm');
         var s = usp.toString();
         history.pushState({}, null, window.location.pathname + (s? `?${s}`: ''));
-        return decodeURIComponent(vsmStr);
+        return vsmStr;
       }
       catch(err) {}
     }
