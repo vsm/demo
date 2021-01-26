@@ -370,14 +370,16 @@
 
   function setElMsgWidthLike(basedOnEl = elTxt) {
     var w = ~~getComputedStyle(basedOnEl).width.replace('px', '');
-    setElMsgWidthVal(w);
+    var isMaxColsChanged = setElMsgWidthVal(w);
 
-    // Also update elTxt's content.
-    try {
-      updateElTxtValue(JSON5.parse(elTxt.value));
-      fitAllTextAreas()
+    // Also update elTxt's content, if needed.
+    if (isMaxColsChanged) {
+      try {
+        updateElTxtValue(JSON5.parse(elTxt.value));
+        fitAllTextAreas();
+      }
+      catch (err) {}
     }
-    catch (err) {}
   }
 
 
@@ -391,7 +393,10 @@
       .forEach(e => e.style.width = w + 'px');
 
     // Update 'maxCols' for VsmJsonPretty.
-    elTxtMaxCols = Math.max(10, ~~(w / elTxtCharWidth));
+    var maxColsNew       = Math.max(10, ~~(w / elTxtCharWidth));
+    var isMaxColsChanged = elTxtMaxCols != maxColsNew;
+    elTxtMaxCols = maxColsNew;
+    return isMaxColsChanged;
   }
 
 
@@ -498,7 +503,6 @@
   function boxValueToStateText(value) {         // (See vsm-box's index-dev.js).
     currentVSM = value;
     var text = updateElTxtValue(value);
-    updatePermaLink(text);
     setMsg(1);
     updateRdf(value);
     setPureSVGText({ afterVsmBoxChange: true });
@@ -508,6 +512,7 @@
   function updateElTxtValue(value) {
     var text = elTxt.value = lastAutoFilledText =
       VsmJsonPretty(value, { json5: json5, maxLength: elTxtMaxCols });
+    updatePermaLink(text);
     return text;
   }
 
@@ -639,10 +644,15 @@
   }
 
 
-  // --- Load the vsm data from the URL, if given. We only do this now,
-  //     so that we can put the literal given String in the text area.
-  //     (So any extra spaces to align property names will be preserved).  ---
 
+  /**
+   * After everything is loaded:
+   * - Clean up some placeholder-CSS.
+   * - Load any vsm-data from the URL. We do this (not via vsmBoxInitialValue,
+   *   but) via the textarea. There, we can place the given String unchanged, so
+   *   that any extra spaces (like to align property names) will be preserved.
+   * - Focus the vsm-box via a simulated mouseclick, if needed.
+   */
   setTimeout(() => {
     var vsmStr = loadFromPermaLink(true);
     if (vsmStr) {
@@ -650,20 +660,23 @@
       var maxLineLen = Math.max(...vsmStr.split(/\r?\n/g).map(s => s.length));
       setElMsgWidthVal((maxLineLen + 5) * elTxtCharWidth,  false);
 
-      elTxt.value = vsmStr;
-      stateTextToBoxValue();
+      // Do not focus the vsm-box, but widen the endTerm as if it was clicked.
+      autofocus = false;
+      var w = vsmBoxSizes.minEndTermWideWidth;
+      updateVsmBoxSizes({ minEndTermWidth: w, minEndTermWideWidth: w });
+
+      // Put the URL-parameter's text in the textarea, and update vsm-box.
+      setTimeout(() => {  // Give until the new `sizes` has been applied.
+        elTxt.value = vsmStr;
+        stateTextToBoxValue();
+      }, 10);
     }
-  }, 50);
 
-
-  // --- Clean up some placeholder-CSS, now/after everything is loaded.
-  //     And focus the vsm-box via a simulated mouseclick, if needed.   ---
-
-  setTimeout(() => {
     var a = [...document.getElementsByClassName('loading')];
     for (let el of a)  el.classList.remove('loading');
+
     if (autofocus)  focusVsmBox();
-  }, 100);
+  }, 50);
 
 
   function focusVsmBox() {
