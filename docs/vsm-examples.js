@@ -22,7 +22,7 @@ function vsmExamplesList(opt) {
       ],
       terms: [
         { str: 'John',    classID: 'https://orcid.org/0000-0002-1175-2668',
-          instID: 'http://127.0.0.1/platform-db-instance-id-007',
+          instID: 'http://127.0.0.1/db-instance-id-007',
           dictID: 'https://orcid.org',
           descr: 'Dr. John Doe' },
         { str: 'eats',    classID: 'http://purl.obolibrary.org/obo/RO_0002470',
