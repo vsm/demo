@@ -581,7 +581,15 @@
   function updateRdf(vsm) {
     try {
       var rdf = vsm && VsmToRdf(vsm);
-      elTxt2.value = rdf === null ?  '-' :  rdf === '' ?  ''/*'no data'*/ :  rdf;
+      elTxt2.value = rdf === null ?  '-' :  rdf === '' ?  ''/*'no data'*/ :  rdf
+        // (Hard-code some changes, in anticipation of updates to `vsm-to-rdf`: )
+        .replace('vsmo: <http://www.w3id.org/vsmo/>', 'vsm: <http://www.w3id.org/vsm/>')
+        .replace(/\[a vsmo:HasQuality\] vsmo:has-agent (.+) ; vsmo:acts-on/g, '$1 vsm:attribute')
+        .replace(/vsmo:has-agent/g,         'vsm:subject')
+        .replace(/vsmo:acts-on/g,           'vsm:object')
+        .replace(/vsmo:has-first-element/g, 'vsm:first')
+        .replace(/vsmo:has-next-element/g,  'vsm:next')
+        .replace(/vsmo:has-parent/g,        'vsm:parent');
     }
     catch(e) {
       elTxt2.value = `Error: could not run 'vsm-to-rdf.min.js'.`;
