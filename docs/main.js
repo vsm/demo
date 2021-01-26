@@ -54,6 +54,8 @@
   var elDlDelay  = $el('inputDlDelay');
   var elSVGBtn   = $el('buttonGetSVG');
   var elPNGBtn   = $el('buttonGetPNG');
+  var elPLinkW   = $el('permalinkWrap');
+  var elPLink    = $el('permalink');
   var elRsz1     = $el('wsResizer1');
   var elRsz2     = $el('wsResizer2');
   var elRsz3     = $el('wsResizer3');
@@ -366,18 +368,30 @@
 
   // --- Initialize the 'msg' elements (above the textareas) ---
 
-  function setElMsgWidth(basedOnEl = elTxt) {
-    var w = getComputedStyle(basedOnEl).width;
-    [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4, elMsg, elMsg2]
-      .forEach(e => e.style.width = w );
+  function setElMsgWidthLike(basedOnEl = elTxt) {
+    var w = ~~getComputedStyle(basedOnEl).width.replace('px', '');
+    setElMsgWidthVal(w);
 
-    // Update 'maxCols' for VsmJsonPretty, and then update elTxt's content.
-    elTxtMaxCols = Math.max(10, ~~(~~w.replace('px', '') / elTxtCharWidth) );
+    // Also update elTxt's content.
     try {
       updateElTxtValue(JSON5.parse(elTxt.value));
       fitAllTextAreas()
     }
     catch (err) {}
+  }
+
+
+  function setElMsgWidthVal(w, allowNarrower = true) {
+    if (!allowNarrower) {
+      var wNow = ~~getComputedStyle(elTxt).width.replace('px', '');
+      w = Math.max(w, wNow);
+    }
+
+    [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4, elMsg, elMsg2]
+      .forEach(e => e.style.width = w + 'px');
+
+    // Update 'maxCols' for VsmJsonPretty.
+    elTxtMaxCols = Math.max(10, ~~(w / elTxtCharWidth));
   }
 
 
@@ -391,7 +405,7 @@
       ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
   }
 
-  setElMsgWidth(elTxt);
+  setElMsgWidthLike(elTxt);
   setMsg('');
 
 
@@ -399,10 +413,10 @@
   // --- Resize handling ---
 
 
-  window.addEventListener('resize', () => setElMsgWidth(elTxt));
+  window.addEventListener('resize', () => setElMsgWidthLike(elTxt));
   [elTxt, elTxt2, elRsz1, elRsz2, elRsz3, elRsz4] .forEach(e => {
-    e.addEventListener('mouseup' , () => setElMsgWidth(e));
-    e.addEventListener('touchend', () => setElMsgWidth(e));
+    e.addEventListener('mouseup' , () => setElMsgWidthLike(e));
+    e.addEventListener('touchend', () => setElMsgWidthLike(e));
   });
 
 
@@ -483,7 +497,8 @@
 
   function boxValueToStateText(value) {         // (See vsm-box's index-dev.js).
     currentVSM = value;
-    updateElTxtValue(value);
+    var text = updateElTxtValue(value);
+    updatePermaLink(text);
     setMsg(1);
     updateRdf(value);
     setPureSVGText({ afterVsmBoxChange: true });
@@ -491,9 +506,10 @@
   }
 
   function updateElTxtValue(value) {
-    elTxt.value = lastAutoFilledText =
+    var text = elTxt.value = lastAutoFilledText =
       VsmJsonPretty(value, { json5: json5, maxLength: elTxtMaxCols });
-    }
+    return text;
+  }
 
   function stateTextToBoxValue() {              // (See vsm-box's index-dev.js).
     var abort = lastAutoFilledText === elTxt.value;
@@ -501,17 +517,54 @@
     if (abort)  return;
 
     try {
-      var vsm = JSON5.parse(elTxt.value);
+      var text = elTxt.value;
+      var vsm  = JSON5.parse(text);
       elVsmBox.initialValue = currentVSM = vsm;
+      updatePermaLink(text);
       setMsg(-1);
       updateRdf(vsm);
       setPureSVGText();
       fitAllTextAreas();
     }
     catch (err) {
+      updatePermaLink(text);
       setMsg(err.toString().replace('JSON5: ', ''));
       updateRdf(null);
     }
+  }
+
+
+
+  // --- Permalink handling ---
+
+  function updatePermaLink(text = '') {
+    //var hide = !text || text.replace(/\s/g, '') == '{terms:[],conns:[]}';
+    hide = false;  // Even show permalink when empty.
+    classCond(elPLinkW, hide, 'hidden');
+    elPLink.href = '?vsm=' + encodeURIComponent(text)
+      ///.replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16));
+  }
+
+
+  function classCond(el, bool, className) {  // Add/removes class based on `bool`.
+    el.classList[bool ? 'add' : 'remove'](className);
+  }
+
+
+  function loadFromPermaLink() {  // Loads '&vsm=' parameter data, if present.
+    var usp = new URLSearchParams(window.location.search);
+    var vsmStr = usp.get('vsm');
+    if (vsmStr) {
+      try {
+        // Clean the URL: remove the long parameter. (Browser 'Back' reshows it).
+        usp.delete('vsm');
+        var s = usp.toString();
+        history.pushState({}, null, window.location.pathname + (s? `?${s}`: ''));
+        return decodeURIComponent(vsmStr);
+      }
+      catch(err) {}
+    }
+    return undefined;
   }
 
 
@@ -584,6 +637,23 @@
       }
     ), 100);  // (At least 'png' output needs some time for things to settle).
   }
+
+
+  // --- Load the vsm data from the URL, if given. We only do this now,
+  //     so that we can put the literal given String in the text area.
+  //     (So any extra spaces to align property names will be preserved).  ---
+
+  setTimeout(() => {
+    var vsmStr = loadFromPermaLink(true);
+    if (vsmStr) {
+      // Accomodate for perhaps long lines.
+      var maxLineLen = Math.max(...vsmStr.split(/\r?\n/g).map(s => s.length));
+      setElMsgWidthVal((maxLineLen + 5) * elTxtCharWidth,  false);
+
+      elTxt.value = vsmStr;
+      stateTextToBoxValue();
+    }
+  }, 50);
 
 
   // --- Clean up some placeholder-CSS, now/after everything is loaded.

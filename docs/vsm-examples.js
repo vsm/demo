@@ -16,10 +16,12 @@ function vsmExamplesList(opt) {
 
     // --- The introductory 'John eats chicken' example.
     {
+      TIPS: [
+        '--- Hover the mouse over a blue VSM-term. A pop-up will show the data from herebelow.',
+        '--- Or drag the terms around and see this data change.',
+      ],
       terms: [
-        { TIP1: '--- Mouse-hover some blue VSM-terms => the data herebelow pops up',
-          TIP2: '--- Or drag them around and see this data change',
-          str: 'John',    classID: 'https://orcid.org/0000-0002-1175-2668',
+        { str: 'John',    classID: 'https://orcid.org/0000-0002-1175-2668',
           instID: 'http://127.0.0.1/platform-db-instance-id-007',
           dictID: 'https://orcid.org',
           descr: 'Dr. John Doe' },
