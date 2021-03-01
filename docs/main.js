@@ -119,8 +119,10 @@
   elVsmBox.freshListDelay = '0';             // ..or Strings to these attributes.
   updateVsmBoxSizes(vsmBoxInitialSizes);
 
-  function updateVsmBoxSizes(sizes) {  // It detects change when given `new` Obj.
-    elVsmBox.sizes = vsmBoxSizes = Object.assign({}, vsmBoxSizes, sizes);
+  function updateVsmBoxSizes(sizes, deleteKeys = []) {
+    vsmBoxSizes = Object.assign({}, vsmBoxSizes, sizes);
+    deleteKeys.forEach(key => { delete vsmBoxSizes[key] });
+    elVsmBox.sizes = vsmBoxSizes;  // Only detects change when given `new` Obj.
   }
 
 
@@ -166,12 +168,25 @@
   // Initialize the checkbox to make connectors-background & VsmBox-border white.
   elWhBTgl.checked = whiteBox;  // Setting this forces a reset of the
                                 // checkbox, at pageload.
-  elVsmBox.classList[whiteBox ? 'add' : 'remove']('whiteBox');
+  updateWhiteBoxStyle();
   elWhBTgl.addEventListener('change', function() {
     whiteBox = !whiteBox;
-    elVsmBox.classList.toggle('whiteBox');
-    setPureSVGText();
+    updateWhiteBoxStyle();
   });
+  function updateWhiteBoxStyle() {
+    elVsmBox.classList[whiteBox ? 'add' : 'remove']('whiteBox');
+    // In whiteBox, make conn-feet and stubs lighter than their current defaults.
+    if (whiteBox)  updateVsmBoxSizes({
+      connFootColor:     '#d4d4d4',
+      connStubBackColor: '#c8c8c8',
+      connStubLegColor:  '#c8c8c8',
+      connStubFootColor: '#d0d0d0'
+    });
+    else  updateVsmBoxSizes({}, [
+      'connFootColor', 'connStubBackColor', 'connStubLegColor', 'connStubFootColor'
+    ]);
+    setPureSVGText();
+  }
 
 
   // Init checkbox for removing connectors' feet.
@@ -641,9 +656,8 @@
   function prepAndDL(options) {
     if (autoWhiteBox && !whiteBox) {
       whiteBox = true;
-      elVsmBox.classList.toggle('whiteBox');
       elWhBTgl.checked = true;
-      setPureSVGText();
+      updateWhiteBoxStyle();
     }
 
     setTimeout(() => downloadVsmBoxImage(elVsmBox,
