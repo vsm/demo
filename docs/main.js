@@ -838,7 +838,7 @@
    * (by calling `dom-to-image-more` or `dom-to-pure-svg.js`),
    * and offers it in a Save As dialog, for to the user to download.
    * + This requires the package 'dom-to-image-more'. Include it like this:
-   *     <script src="https://unpkg.com/dom-to-image-more/dist/dom-to-image-more.min.js">< /script>
+   *     <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more/dist/dom-to-image-more.min.js">< /script>
    * + `options` (optional, with all optional properties):
    *   - filename {String}:
    *       name without extension.
