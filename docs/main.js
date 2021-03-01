@@ -175,16 +175,18 @@
   });
   function updateWhiteBoxStyle() {
     elVsmBox.classList[whiteBox ? 'add' : 'remove']('whiteBox');
-    // In whiteBox, make conn-feet and stubs lighter than their current defaults.
-    if (whiteBox)  updateVsmBoxSizes({
-      connFootColor:     '#d4d4d4',
-      connStubBackColor: '#c8c8c8',
-      connStubLegColor:  '#c8c8c8',
-      connStubFootColor: '#d0d0d0'
-    });
-    else  updateVsmBoxSizes({}, [
-      'connFootColor', 'connStubBackColor', 'connStubLegColor', 'connStubFootColor'
-    ]);
+    if (!sketchBox) {
+      // In whiteBox, make conn-feet and stubs lighter than their current defaults.
+      if (whiteBox)  updateVsmBoxSizes({
+        connFootColor:     '#d4d4d4',
+        connStubBackColor: '#c8c8c8',
+        connStubLegColor:  '#c8c8c8',
+        connStubFootColor: '#d0d0d0'
+      });
+      else  updateVsmBoxSizes({}, [
+        'connFootColor', 'connStubBackColor', 'connStubLegColor', 'connStubFootColor'
+      ]);
+    }
     setPureSVGText();
   }
 
@@ -235,11 +237,14 @@
       connRefParH:     fp(4.5),
       connBackColor: n ? '#7a7a7a' : '#000',
       connLegColor:  n ? '#7a7a7a' : '#000',
-      connStubBackColor: n ? '#c3c3c3' : '#eee',
-      connStubLegColor:  n ? '#c3c3c3' : '#eee',
-      connStubFootColor: n ? '#cbcbcb' : '#f2f2f2',
       connRIFGColor: [n ? '#aabcce' : 'transparent',  '#fff',  '#fff'],
-    });
+      ...(!n && {
+        connStubBackColor: '#eee',     ///n ? '#c3c3c3' : '#eee',
+        connStubLegColor:  '#eee',     ///n ? '#c3c3c3' : '#eee',
+        connStubFootColor: '#f2f2f2',  ///n ? '#cbcbcb' : '#f2f2f2',
+      }) },
+      n ? [ 'connStubBackColor', 'connStubLegColor', 'connStubFootColor' ] : []
+    );
 
     // In sketchBox mode, use no dictionaries (=> clean/emptiest VSM-JSON).
     elVsmBox.vsmDictionary = createDict(!b ? undefined :  {});
