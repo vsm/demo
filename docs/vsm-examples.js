@@ -572,7 +572,7 @@ function vsmExamplesList(opt) {
     { terms: [
         { str: 'Apelin',          classID: 'https://www.uniprot.org/uniprot/Q9ULZ1', instID: null },
         { str: 'or',              classID: null, instID: null },
-        { str: 'its',             classID: null, instID: null },
+        { str: 'Apelin',          classID: 'https://www.uniprot.org/uniprot/Q9ULZ1', instID: null },
         { str: 'receptor',        classID: null, instID: null },
         { str: 'agonists',        classID: null, instID: null },
         { str: 'are',             classID: null, instID: null },
@@ -596,7 +596,6 @@ function vsmExamplesList(opt) {
         { type: 'T', pos: [ 3, -1, 2 ] },
         { type: 'T', pos: [ 4, -1, 3 ] },
         { type: 'L', pos: [ 1, 0, 4 ] },
-        { type: 'R', pos: [ 2, 0 ] },
         { type: 'T', pos: [ 7, -1, 6 ] },
         { type: 'T', pos: [ 7, 8, 9 ] },
         { type: 'T', pos: [ 1, 5, 7 ] },
