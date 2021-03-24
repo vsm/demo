@@ -77,7 +77,7 @@ You can give the vsm-box three appearances in this demo:
   first hit Ctrl+Del in the input-field behind the last term. That narrows it.
 
 • See Appendix 1 and 2 below for:
-  ◦ how to convert SVG to EMG properly (e.g. to add it in Word or Google Docs), or
+  ◦ how to convert SVG to EMF properly (e.g. to add it in Word or Google Docs), or
   ◦ tips on converting text and paths to 'outlines'.
 
 
